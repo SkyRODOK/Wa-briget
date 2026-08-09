@@ -87,7 +87,8 @@ async function tryRequestPairingOnReady() {
         latestPairingCode = null;
         pairingRequested = false;
         io.emit('pairing-error', {
-            error: err?.message || 'Gagal membuat kode. Coba Minta Kode Baru atau pakai Scan QR.'
+            error: (err?.message ? err.message + ' — ' : '') +
+                'Gagal membuat kode pairing. Ini kadang disebabkan gangguan sementara di sisi WhatsApp untuk metode pairing code. Coba "Minta Kode Baru", atau gunakan tab Scan QR (lebih stabil).'
         });
     } finally {
         pairingCodeInFlight = false;
@@ -241,8 +242,9 @@ async function startWA() {
         auth: state,
         logger: pino({ level: 'silent' }),
         printQRInTerminal: false,
-        // Canonical browser — label custom sering bikin pairing code "mati" (WA tolak)
-        browser: Browsers.macOS('Safari'),
+        // Browser HARUS salah satu identitas resmi (Chrome/Safari/Edge) — custom label bikin pairing ditolak WA.
+        // Google Chrome dipakai karena paling stabil untuk metode pairing code per rekomendasi resmi Baileys.
+        browser: Browsers.macOS('Google Chrome'),
         syncFullHistory: false,
         markOnlineOnConnect: false,
         connectTimeoutMs: 60_000,
