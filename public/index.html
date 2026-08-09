@@ -24,7 +24,10 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        html { height: 100%; }
+        html {
+            height: 100%;
+            overscroll-behavior: none;
+        }
         body {
             font-family: var(--font);
             background: var(--bg-deep);
@@ -32,8 +35,10 @@
             height: calc(var(--app-height, 100vh));
             height: 100dvh;
             overflow: hidden;
+            overscroll-behavior: none;
+            position: fixed;
+            inset: 0;
             color: var(--text);
-            position: relative;
             -webkit-font-smoothing: antialiased;
         }
 
@@ -390,6 +395,7 @@
         .chat-area {
             flex: 1;
             overflow-y: auto;
+            overscroll-behavior-y: contain;
             padding: 18px 14px 14px;
             display: flex;
             flex-direction: column;
@@ -2588,13 +2594,20 @@ const firebaseConfig = {
             }
         }
 
+        const BAD_WORDS = ['anjing', 'bangsat', 'kontol', 'memek', 'ngentot', 'goblok', 'tolol', 'bego', 'asu', 'jancok'];
+
         function filterBadWords(text) {
-            let filtered = text;
-            BAD_WORDS.forEach(word => {
-                const regex = new RegExp('\\b' + word + '\\b', 'gi');
-                filtered = filtered.replace(regex, '•'.repeat(word.length));
-            });
-            return filtered;
+            try {
+                let filtered = text;
+                BAD_WORDS.forEach(word => {
+                    const regex = new RegExp('\\b' + word + '\\b', 'gi');
+                    filtered = filtered.replace(regex, '•'.repeat(word.length));
+                });
+                return filtered;
+            } catch (e) {
+                console.warn('filterBadWords gagal, pakai teks asli:', e);
+                return text;
+            }
         }
 
         function renderEmojiTabs() {
@@ -2909,35 +2922,48 @@ const firebaseConfig = {
         }
 
         function sendMessage() {
-            const text = messageInput.value.trim();
-            if (!text) {
-                showToast('Ketik pesan dulu', '✏️');
-                return;
+            try {
+                const text = messageInput.value.trim();
+                if (!text) {
+                    showToast('Ketik pesan dulu', '✏️');
+                    return;
+                }
+                if (!userName) {
+                    showNameModal();
+                    showToast('Isi nama dulu sebelum chat', '👤');
+                    return;
+                }
+
+                try { ensureAudio(); } catch (_) { /* audio opsional, jangan blok kirim */ }
+
+                let filtered;
+                try {
+                    filtered = filterBadWords(text);
+                } catch (_) {
+                    filtered = text; // kalau filter gagal, tetap kirim teks aslinya
+                }
+
+                const msg = {
+                    text: filtered,
+                    sender: userName,
+                    senderId: userId,
+                    time: getTime(),
+                    timestamp: Date.now(),
+                    isSticker: false
+                };
+
+                // pushMessage sudah fallback ke mode lokal kalau WA/Firebase belum siap,
+                // jadi pesan tetap tampil walau belum ada setup apa pun.
+                pushMessage(msg);
+
+                messageInput.value = '';
+                updateSendButton();
+                if (emojiPicker) emojiPicker.classList.remove('show');
+                messageInput.focus();
+            } catch (err) {
+                console.error('sendMessage gagal:', err);
+                showToast('Gagal kirim pesan: ' + (err && err.message ? err.message : 'error tidak diketahui'), '❌');
             }
-            if (!userName) {
-                showNameModal();
-                showToast('Isi nama dulu sebelum chat', '👤');
-                return;
-            }
-
-            ensureAudio(); // unlock audio on user gesture
-
-            const filtered = filterBadWords(text);
-            const msg = {
-                text: filtered,
-                sender: userName,
-                senderId: userId,
-                time: getTime(),
-                timestamp: Date.now(),
-                isSticker: false
-            };
-
-            pushMessage(msg);
-
-            messageInput.value = '';
-            updateSendButton();
-            emojiPicker.classList.remove('show');
-            messageInput.focus();
         }
 
         function sendSticker(emoji) {
