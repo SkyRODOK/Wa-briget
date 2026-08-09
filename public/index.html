@@ -1,0 +1,3041 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+    <title>NeoChat Realtime — Blue Black</title>
+    <style>
+        :root {
+            --bg-deep: #05050f;
+            --bg-panel: #0c0c1a;
+            --accent: #00d4ff;
+            --accent-2: #0084ff;
+            --accent-3: #0066cc;
+            --glow: 0 0 20px rgba(0, 212, 255, 0.35);
+            --glow-strong: 0 0 40px rgba(0, 212, 255, 0.5);
+            --text: #e8eaf6;
+            --text-muted: #8b8fa8;
+            --border: rgba(0, 132, 255, 0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { height: 100%; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-deep);
+            height: 100vh;
+            height: calc(var(--app-height, 100vh));
+            height: 100dvh;
+            overflow: hidden;
+            color: var(--text);
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 15% 15%, rgba(0, 132, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 40% at 85% 75%, rgba(0, 212, 255, 0.07) 0%, transparent 50%),
+                radial-gradient(ellipse 50% 30% at 50% 100%, rgba(0, 100, 200, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(70px);
+            opacity: 0.22;
+            pointer-events: none;
+            z-index: 0;
+            animation: orbFloat 20s ease-in-out infinite;
+        }
+        .orb-1 { width: 340px; height: 340px; background: #0084ff; top: -100px; left: -80px; }
+        .orb-2 { width: 280px; height: 280px; background: #00d4ff; bottom: 5%; right: -50px; animation-delay: -7s; }
+        .orb-3 { width: 200px; height: 200px; background: #0055aa; top: 45%; left: 25%; animation-delay: -14s; }
+
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(25px, -35px) scale(1.06); }
+            66% { transform: translate(-18px, 20px) scale(0.96); }
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            height: calc(var(--app-height, 100vh));
+            height: 100dvh;
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            background: linear-gradient(180deg, rgba(10, 15, 30, 0.94) 0%, rgba(5, 8, 18, 0.97) 100%);
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            box-shadow: 0 0 80px rgba(0, 132, 255, 0.1), inset 0 1px 0 rgba(255,255,255,0.03);
+            backdrop-filter: blur(20px);
+        }
+
+        .top-glow {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00d4ff 25%, #0084ff 50%, #00d4ff 75%, transparent);
+            box-shadow: 0 0 14px #00d4ff;
+            z-index: 50;
+        }
+
+        /* ===== HEADER ===== */
+        .chat-header {
+            padding: 13px 14px 11px;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            background: linear-gradient(180deg, rgba(12, 20, 40, 0.96) 0%, rgba(8, 14, 30, 0.9) 100%);
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            z-index: 40;
+            backdrop-filter: blur(16px);
+        }
+
+        .header-avatar-wrap { position: relative; flex-shrink: 0; }
+
+        .header-avatar {
+            width: 46px; height: 46px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff 0%, #0084ff 60%, #0055cc 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: var(--glow), 0 4px 14px rgba(0,0,0,0.4);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .header-avatar::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.22) 0%, transparent 55%);
+            border-radius: 50%;
+        }
+        .header-avatar:hover { transform: scale(1.08) rotate(-3deg); box-shadow: var(--glow-strong); }
+
+        .online-ring {
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            border-top-color: #31a24c;
+            border-right-color: #31a24c;
+            animation: spinRing 2.8s linear infinite;
+        }
+        @keyframes spinRing { to { transform: rotate(360deg); } }
+
+        .online-dot {
+            position: absolute;
+            bottom: 1px; right: 1px;
+            width: 13px; height: 13px;
+            background: #31a24c;
+            border: 2.5px solid #0a1220;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #31a24c;
+            z-index: 2;
+        }
+
+        .header-info { flex: 1; min-width: 0; }
+
+        .header-title-row {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 2px;
+        }
+
+        .header-title {
+            font-size: 15.5px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            background: linear-gradient(90deg, #fff 0%, #a0d8ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .verified-badge {
+            width: 15px; height: 15px;
+            background: linear-gradient(135deg, #00d4ff, #0084ff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            flex-shrink: 0;
+            box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+            color: #fff;
+        }
+
+        .header-status-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-pulse {
+            width: 7px; height: 7px;
+            background: #31a24c;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #31a24c;
+            animation: pulseDot 1.8s ease-in-out infinite;
+        }
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.45; transform: scale(0.82); }
+        }
+
+        .header-status {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .header-status span { color: #31a24c; font-weight: 600; }
+
+        .online-count {
+            font-size: 10px;
+            background: rgba(0, 132, 255, 0.15);
+            border: 1px solid rgba(0, 132, 255, 0.25);
+            color: #00d4ff;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-left: 4px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            width: 38px; height: 38px;
+            border-radius: 12px;
+            background: rgba(0, 132, 255, 0.07);
+            border: 1px solid var(--border);
+            color: #00d4ff;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .icon-btn:hover {
+            background: rgba(0, 132, 255, 0.16);
+            border-color: rgba(0, 132, 255, 0.4);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 5px 14px rgba(0, 132, 255, 0.22);
+            color: #fff;
+        }
+        .icon-btn:active { transform: scale(0.92); }
+        .icon-btn.active-notif {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: rgba(0, 212, 255, 0.5);
+            color: #fff;
+            box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+        }
+
+        /* Menu */
+        .menu-container { position: relative; }
+
+        .menu-dropdown {
+            position: absolute;
+            right: 0; top: 46px;
+            width: 240px;
+            background: linear-gradient(160deg, rgba(12, 22, 45, 0.98) 0%, rgba(8, 14, 30, 0.98) 100%);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: 0 18px 45px rgba(0,0,0,0.55), 0 0 25px rgba(0,132,255,0.1);
+            z-index: 1000;
+            overflow: hidden;
+            display: none;
+            backdrop-filter: blur(18px);
+            transform-origin: top right;
+        }
+        .menu-dropdown.show {
+            display: block;
+            animation: menuPop 0.26s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes menuPop {
+            from { opacity: 0; transform: scale(0.9) translateY(-8px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .menu-item {
+            padding: 12px 14px;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: 13px;
+            color: #d0d8f0;
+            transition: all 0.18s;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            font-weight: 500;
+            border-bottom: 1px solid rgba(0,132,255,0.07);
+        }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-item:hover {
+            background: linear-gradient(90deg, rgba(0,132,255,0.12) 0%, transparent 100%);
+            color: #fff;
+            padding-left: 18px;
+        }
+        .menu-item .mi-icon {
+            width: 30px; height: 30px;
+            border-radius: 9px;
+            background: rgba(0,132,255,0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .menu-item .mi-status {
+            margin-left: auto;
+            font-size: 10px;
+            padding: 2px 7px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        .mi-status.on { background: rgba(49,162,76,0.2); color: #6ddf8a; }
+        .mi-status.off { background: rgba(255,100,100,0.15); color: #ff8a8a; }
+
+        .menu-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0,132,255,0.2), transparent);
+            margin: 3px 0;
+        }
+
+        /* ===== CHAT AREA ===== */
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 18px 14px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+            position: relative;
+            scroll-behavior: smooth;
+        }
+        .chat-area::-webkit-scrollbar { width: 4px; }
+        .chat-area::-webkit-scrollbar-track { background: transparent; }
+        .chat-area::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #00d4ff, #0084ff);
+            border-radius: 10px;
+        }
+
+        .date-separator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 6px 0 10px;
+            opacity: 0.75;
+        }
+        .date-separator::before,
+        .date-separator::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0,132,255,0.25), transparent);
+        }
+        .date-separator span {
+            font-size: 10.5px;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            background: rgba(0,132,255,0.08);
+            padding: 3px 11px;
+            border-radius: 20px;
+            border: 1px solid rgba(0,132,255,0.14);
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 16px;
+            text-align: center;
+            padding: 0 28px;
+        }
+        .empty-visual {
+            position: relative;
+            width: 130px; height: 130px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .empty-ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1.5px solid rgba(0,132,255,0.22);
+            animation: emptyPulse 3s ease-in-out infinite;
+        }
+        .empty-ring:nth-child(1) { width: 100%; height: 100%; }
+        .empty-ring:nth-child(2) { width: 72%; height: 72%; animation-delay: 0.35s; }
+        .empty-ring:nth-child(3) { width: 44%; height: 44%; animation-delay: 0.7s; }
+        @keyframes emptyPulse {
+            0%, 100% { transform: scale(1); opacity: 0.35; }
+            50% { transform: scale(1.07); opacity: 0.75; }
+        }
+        .empty-icon {
+            font-size: 44px;
+            position: relative;
+            z-index: 2;
+            filter: drop-shadow(0 0 18px rgba(0,132,255,0.5));
+            animation: floatIcon 3.5s ease-in-out infinite;
+        }
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-11px); }
+        }
+        .empty-title {
+            font-size: 19px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #fff, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .empty-sub {
+            font-size: 12.5px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            max-width: 230px;
+        }
+        .empty-hints {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            justify-content: center;
+            margin-top: 6px;
+        }
+        .hint-chip {
+            font-size: 10.5px;
+            padding: 5px 11px;
+            border-radius: 20px;
+            background: rgba(0,132,255,0.09);
+            border: 1px solid rgba(0,132,255,0.18);
+            color: #00d4ff;
+            font-weight: 500;
+        }
+
+        .message-group {
+            display: flex;
+            gap: 7px;
+            align-items: flex-end;
+            animation: msgIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateY(16px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .message-group.sent { justify-content: flex-end; }
+
+        .avatar {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #0084ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            flex-shrink: 0;
+            box-shadow: 0 3px 9px rgba(0,132,255,0.3);
+        }
+        .avatar-spacer { width: 30px; flex-shrink: 0; }
+
+        .bubble-wrap { max-width: 78%; display: flex; flex-direction: column; }
+
+        .sender-name {
+            font-size: 10.5px;
+            font-weight: 600;
+            color: #00d4ff;
+            margin-bottom: 3px;
+            margin-left: 4px;
+            opacity: 0.9;
+        }
+        .message-group.sent .sender-name {
+            text-align: right;
+            margin-right: 4px;
+            margin-left: 0;
+            color: #7ec8ff;
+        }
+
+        .message-bubble {
+            padding: 10px 13px 7px;
+            border-radius: 16px;
+            font-size: 13.5px;
+            line-height: 1.45;
+            position: relative;
+            word-wrap: break-word;
+            transition: transform 0.18s;
+        }
+        .message-bubble:hover { transform: scale(1.01); }
+
+        .message-bubble.received {
+            background: linear-gradient(145deg, rgba(25, 40, 70, 0.92) 0%, rgba(15, 25, 50, 0.95) 100%);
+            color: #e0e8f8;
+            border-bottom-left-radius: 4px;
+            border: 1px solid rgba(0,132,255,0.1);
+            box-shadow: 0 3px 14px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04);
+        }
+        .message-bubble.sent {
+            background: linear-gradient(135deg, #00b8e8 0%, #0084ff 50%, #0060cc 100%);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 16px rgba(0,132,255,0.35), inset 0 1px 0 rgba(255,255,255,0.18);
+        }
+        .message-bubble.sent::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: linear-gradient(135deg, rgba(255,255,255,0.14) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .message-text { position: relative; z-index: 1; }
+
+        .message-meta {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            margin-top: 4px;
+            position: relative;
+            z-index: 1;
+        }
+        .message-time {
+            font-size: 10px;
+            font-weight: 500;
+            opacity: 0.7;
+        }
+        .message-bubble.received .message-time { color: #8a98b8; }
+        .message-bubble.sent .message-time { color: rgba(255,255,255,0.75); }
+        .msg-check { font-size: 11px; opacity: 0.85; }
+
+        .sticker {
+            font-size: 52px;
+            display: inline-block;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.25));
+            animation: stickerPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes stickerPop {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Emoji Picker */
+        .emoji-picker {
+            background: linear-gradient(180deg, rgba(10,18,35,0.98) 0%, rgba(6,12,25,0.98) 100%);
+            border-top: 1px solid var(--border);
+            padding: 11px 9px 9px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            backdrop-filter: blur(14px);
+        }
+        .emoji-picker.show {
+            display: block;
+            animation: slideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .emoji-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 9px;
+            padding: 0 3px;
+        }
+        .emoji-header span {
+            font-size: 10.5px;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
+        .emoji-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 15px;
+            cursor: pointer;
+            width: 26px; height: 26px;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.18s;
+        }
+        .emoji-close:hover { background: rgba(255,255,255,0.07); color: #fff; }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            gap: 3px;
+        }
+        .emoji-btn {
+            background: rgba(0,132,255,0.05);
+            border: 1px solid transparent;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 10px;
+            transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .emoji-btn:hover {
+            background: rgba(0,132,255,0.15);
+            border-color: rgba(0,132,255,0.3);
+            transform: scale(1.2);
+            box-shadow: 0 3px 12px rgba(0,132,255,0.2);
+        }
+
+        /* Input */
+        .input-area {
+            padding: 9px 9px calc(12px + env(safe-area-inset-bottom, 0px));
+            background: linear-gradient(180deg, rgba(8,14,28,0.92) 0%, rgba(5,10,20,0.98) 100%);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 7px;
+            align-items: flex-end;
+            position: relative;
+            z-index: 30;
+            flex-shrink: 0;
+        }
+        .tool-btn {
+            width: 36px; height: 36px;
+            border-radius: 11px;
+            background: rgba(0,132,255,0.07);
+            border: 1px solid var(--border);
+            color: #00d4ff;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .tool-btn:hover {
+            background: rgba(0,132,255,0.15);
+            transform: scale(1.08);
+            box-shadow: 0 3px 10px rgba(0,132,255,0.2);
+            color: #fff;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(255,255,255,0.035);
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            padding: 3px 5px 3px 13px;
+            transition: all 0.28s;
+            min-height: 42px;
+        }
+        .input-wrapper:focus-within {
+            border-color: rgba(0,132,255,0.5);
+            background: rgba(0,132,255,0.07);
+            box-shadow: 0 0 0 3px rgba(0,132,255,0.1), 0 0 18px rgba(0,132,255,0.12);
+        }
+        .input-field {
+            flex: 1;
+            border: none;
+            background: none;
+            outline: none;
+            font-size: 13.5px;
+            font-family: inherit;
+            color: var(--text);
+            padding: 7px 0;
+            min-width: 0;
+        }
+        .input-field::placeholder { color: #4a5570; }
+
+        .action-btn {
+            width: 32px; height: 32px;
+            border-radius: 9px;
+            background: transparent;
+            border: none;
+            color: #00d4ff;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.18s;
+        }
+        .action-btn:hover {
+            background: rgba(0,132,255,0.12);
+            transform: scale(1.1);
+            color: #fff;
+        }
+
+        .send-btn {
+            width: 42px; height: 42px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #00d4ff 0%, #0084ff 100%);
+            border: none;
+            color: #fff;
+            font-size: 17px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 16px rgba(0,132,255,0.35);
+            transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .send-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.45s;
+        }
+        .send-btn:hover:not(:disabled) {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 7px 22px rgba(0,132,255,0.45);
+        }
+        .send-btn:hover:not(:disabled)::before { transform: translateX(100%); }
+        .send-btn:active:not(:disabled) { transform: scale(0.93); }
+        .send-btn:disabled {
+            opacity: 0.32;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .bottom-bar {
+            height: 3px;
+            background: linear-gradient(90deg, transparent, rgba(0,132,255,0.3), transparent);
+            margin: 0 18px 4px;
+            border-radius: 2px;
+            opacity: 0.5;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.78);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(8px);
+        }
+        .modal.show {
+            display: flex;
+            animation: fadeIn 0.28s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: linear-gradient(160deg, #0e1a32 0%, #081020 100%);
+            border-radius: 22px;
+            padding: 32px 26px 26px;
+            max-width: 350px;
+            width: 90%;
+            box-shadow: 0 28px 70px rgba(0,0,0,0.6), 0 0 45px rgba(0,132,255,0.15);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            animation: modalUp 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #00d4ff, #0084ff, #00d4ff);
+        }
+        @keyframes modalUp {
+            from { opacity: 0; transform: translateY(36px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .modal-icon-wrap {
+            width: 68px; height: 68px;
+            margin: 0 auto 16px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(0,132,255,0.15), rgba(0,212,255,0.1));
+            border: 1px solid rgba(0,132,255,0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            box-shadow: 0 7px 22px rgba(0,132,255,0.15);
+            animation: iconBounce 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes iconBounce {
+            from { transform: scale(0.4); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            background: linear-gradient(90deg, #fff, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .modal-subtitle {
+            text-align: center;
+            font-size: 11.5px;
+            color: var(--text-muted);
+            margin-bottom: 22px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 13px 15px;
+            border: 1.5px solid var(--border);
+            border-radius: 13px;
+            font-size: 13.5px;
+            margin-bottom: 18px;
+            font-family: inherit;
+            background: rgba(255,255,255,0.04);
+            color: var(--text);
+            transition: all 0.28s;
+        }
+        .modal-input::placeholder { color: #4a5570; }
+        .modal-input:focus {
+            outline: none;
+            border-color: rgba(0,132,255,0.5);
+            background: rgba(0,132,255,0.07);
+            box-shadow: 0 0 0 3px rgba(0,132,255,0.12);
+        }
+        .modal-btn {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, #00d4ff 0%, #0084ff 100%);
+            color: #fff;
+            border: none;
+            border-radius: 13px;
+            font-size: 13.5px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            letter-spacing: 0.3px;
+            box-shadow: 0 5px 18px rgba(0,132,255,0.3);
+            transition: all 0.28s;
+            position: relative;
+            overflow: hidden;
+        }
+        .modal-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.45s;
+        }
+        .modal-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,132,255,0.4);
+        }
+        .modal-btn:hover:not(:disabled)::before { transform: translateX(100%); }
+        .modal-btn:disabled { opacity: 0.38; cursor: not-allowed; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 95px;
+            left: 50%;
+            transform: translateX(-50%) translateY(18px);
+            background: linear-gradient(135deg, rgba(12,22,45,0.96), rgba(8,14,30,0.96));
+            border: 1px solid var(--border);
+            padding: 11px 18px;
+            border-radius: 13px;
+            font-size: 12.5px;
+            color: var(--text);
+            box-shadow: 0 9px 28px rgba(0,0,0,0.4);
+            z-index: 3000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            max-width: 90%;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .conn-status {
+            position: absolute;
+            top: 58px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10.5px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,100,100,0.3);
+            color: #ff8a8a;
+            z-index: 60;
+            display: none;
+            backdrop-filter: blur(8px);
+            white-space: nowrap;
+            max-width: 92%;
+            text-align: center;
+        }
+        .conn-status.show { display: block; }
+        .conn-status.ok {
+            border-color: rgba(49,162,76,0.4);
+            color: #6ddf8a;
+        }
+        .conn-status.warn {
+            border-color: rgba(255, 180, 50, 0.45);
+            color: #ffc857;
+            background: rgba(40, 30, 10, 0.75);
+        }
+        .conn-status.local {
+            border-color: rgba(0, 180, 255, 0.4);
+            color: #7ec8ff;
+            background: rgba(0, 40, 80, 0.7);
+        }
+
+        /* Firebase setup badge di header */
+        .fb-status-badge {
+            font-size: 9.5px;
+            padding: 2px 7px;
+            border-radius: 8px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            margin-left: 2px;
+            text-transform: uppercase;
+        }
+        .fb-status-badge.ready {
+            background: rgba(49,162,76,0.2);
+            color: #6ddf8a;
+            border: 1px solid rgba(49,162,76,0.35);
+        }
+        .fb-status-badge.not-ready {
+            background: rgba(255, 160, 40, 0.18);
+            color: #ffb84d;
+            border: 1px solid rgba(255, 160, 40, 0.35);
+        }
+        .fb-status-badge.local-mode {
+            background: rgba(0, 132, 255, 0.15);
+            color: #7ec8ff;
+            border: 1px solid rgba(0, 132, 255, 0.3);
+        }
+
+        /* Setup guide modal */
+        .setup-guide {
+            max-height: 70vh;
+            overflow-y: auto;
+            text-align: left;
+            font-size: 12.5px;
+            line-height: 1.55;
+            color: #c8d0e8;
+        }
+        .setup-guide h4 {
+            color: #00d4ff;
+            font-size: 13px;
+            margin: 14px 0 6px;
+            font-weight: 700;
+        }
+        .setup-guide ol {
+            padding-left: 18px;
+            margin: 0 0 8px;
+        }
+        .setup-guide li { margin-bottom: 6px; }
+        .setup-guide code {
+            background: rgba(0,132,255,0.12);
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #7ec8ff;
+            word-break: break-all;
+        }
+        .setup-guide .note {
+            background: rgba(255,180,50,0.1);
+            border: 1px solid rgba(255,180,50,0.25);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-top: 12px;
+            font-size: 11.5px;
+            color: #ffc857;
+        }
+        .setup-guide .success-note {
+            background: rgba(49,162,76,0.12);
+            border: 1px solid rgba(49,162,76,0.3);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-top: 10px;
+            font-size: 11.5px;
+            color: #6ddf8a;
+        }
+
+        @media (max-width: 520px) {
+            .chat-container { max-width: 100%; border: none; }
+            .message-bubble { max-width: 84%; }
+            .header-actions .icon-btn:nth-child(3) { display: none; }
+        }
+
+        /* ===== THEMES ===== */
+        [data-theme="purple"] {
+            --bg-deep: #0a0512; --bg-panel: #150c1f; --accent: #c77dff; --accent-2: #9d4edd; --accent-3: #7b2cbf;
+            --glow: 0 0 20px rgba(199,125,255,0.35); --glow-strong: 0 0 40px rgba(199,125,255,0.5);
+            --border: rgba(157,78,221,0.22);
+        }
+        [data-theme="emerald"] {
+            --bg-deep: #030f0a; --bg-panel: #071a12; --accent: #2fe6a0; --accent-2: #0fbf7a; --accent-3: #0a8f5c;
+            --glow: 0 0 20px rgba(47,230,160,0.35); --glow-strong: 0 0 40px rgba(47,230,160,0.5);
+            --border: rgba(15,191,122,0.22);
+        }
+        [data-theme="sunset"] {
+            --bg-deep: #140705; --bg-panel: #1f0d09; --accent: #ff9d4d; --accent-2: #ff6b35; --accent-3: #cc4a1f;
+            --glow: 0 0 20px rgba(255,107,53,0.35); --glow-strong: 0 0 40px rgba(255,107,53,0.5);
+            --border: rgba(255,107,53,0.22);
+        }
+        [data-theme="rose"] {
+            --bg-deep: #14040c; --bg-panel: #1f0813; --accent: #ff6fb0; --accent-2: #ff2d87; --accent-3: #c4166a;
+            --glow: 0 0 20px rgba(255,45,135,0.35); --glow-strong: 0 0 40px rgba(255,45,135,0.5);
+            --border: rgba(255,45,135,0.22);
+        }
+        [data-theme] .header-avatar, [data-theme] .avatar,
+        [data-theme] .verified-badge, [data-theme] .send-btn {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 60%, var(--accent-3) 100%);
+        }
+        [data-theme] .message-bubble.sent {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 50%, var(--accent-3) 100%);
+        }
+        [data-theme] .icon-btn, [data-theme] .tool-btn, [data-theme] .action-btn { color: var(--accent); }
+        [data-theme] .header-title, [data-theme] .modal-title, [data-theme] .empty-title {
+            background: linear-gradient(90deg, #fff 0%, var(--accent) 100%);
+            -webkit-background-clip: text; background-clip: text;
+        }
+        [data-theme] .modal-btn, [data-theme] .top-glow { background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+
+        .theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 6px; }
+        .theme-swatch {
+            border-radius: 14px; padding: 12px 6px; cursor: pointer; text-align: center;
+            border: 1.5px solid var(--border); background: rgba(255,255,255,0.03); transition: all 0.2s;
+        }
+        .theme-swatch.active { border-color: #00d4ff; box-shadow: 0 0 0 2px rgba(0,212,255,0.25); }
+        .theme-dot { width: 30px; height: 30px; border-radius: 50%; margin: 0 auto 6px; }
+        .theme-swatch span { font-size: 10.5px; color: var(--text-muted); font-weight: 600; }
+
+        /* Attach menu */
+        .attach-menu {
+            position: absolute; bottom: 62px; left: 9px;
+            background: linear-gradient(160deg, rgba(12,22,45,0.98), rgba(8,14,30,0.98));
+            border: 1px solid var(--border); border-radius: 16px; padding: 8px;
+            display: none; gap: 4px; flex-direction: column; z-index: 200;
+            box-shadow: 0 18px 45px rgba(0,0,0,0.5); backdrop-filter: blur(16px); min-width: 190px;
+        }
+        .attach-menu.show { display: flex; animation: menuPop 0.22s cubic-bezier(0.34,1.56,0.64,1); }
+        .attach-option {
+            display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px;
+            background: none; border: none; color: #d0d8f0; font-size: 12.5px; font-weight: 500; cursor: pointer; text-align: left;
+        }
+        .attach-option:hover { background: rgba(0,132,255,0.14); color: #fff; }
+        .attach-option .ao-icon {
+            width: 30px; height: 30px; border-radius: 9px; background: rgba(0,132,255,0.15);
+            display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
+        }
+
+        /* Message context menu (delete like WhatsApp) */
+        .msg-ctx-menu {
+            position: fixed; z-index: 2500;
+            background: linear-gradient(160deg, rgba(12,22,45,0.98), rgba(8,14,30,0.98));
+            border: 1px solid var(--border); border-radius: 13px; padding: 6px;
+            box-shadow: 0 18px 45px rgba(0,0,0,0.55); backdrop-filter: blur(16px); min-width: 170px;
+            display: none;
+        }
+        .msg-ctx-menu.show { display: block; animation: menuPop 0.18s cubic-bezier(0.34,1.56,0.64,1); }
+        .msg-ctx-item {
+            display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-radius: 9px;
+            background: none; border: none; color: #d0d8f0; font-size: 12.5px; font-weight: 500; cursor: pointer; width: 100%; text-align: left;
+        }
+        .msg-ctx-item:hover { background: rgba(0,132,255,0.14); color: #fff; }
+        .msg-ctx-item.danger { color: #ff8a8a; }
+        .msg-ctx-item.danger:hover { background: rgba(255,90,90,0.14); }
+        .message-bubble.deleting { opacity: 0.4; transform: scale(0.97); }
+        .message-deleted { font-style: italic; opacity: 0.6; font-size: 12.5px; display: flex; align-items: center; gap: 5px; }
+
+        /* Media message bubbles */
+        .msg-image { max-width: 100%; border-radius: 12px; display: block; margin-bottom: 4px; cursor: pointer; }
+        .msg-video { max-width: 100%; border-radius: 12px; display: block; margin-bottom: 4px; }
+        .msg-audio-wrap { display: flex; align-items: center; gap: 8px; min-width: 200px; }
+        .msg-audio-wrap audio { flex: 1; height: 34px; }
+        .msg-file-card {
+            display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 10px;
+            background: rgba(0,0,0,0.15); text-decoration: none; color: inherit; min-width: 190px;
+        }
+        .msg-file-icon {
+            width: 36px; height: 36px; border-radius: 9px; background: rgba(0,132,255,0.2);
+            display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0;
+        }
+        .msg-file-info { min-width: 0; }
+        .msg-file-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+        .msg-file-size { font-size: 10px; opacity: 0.7; }
+
+        /* Recording indicator */
+        .action-btn.recording { background: rgba(255,60,60,0.25); color: #ff5c5c; animation: recPulse 1s ease-in-out infinite; }
+        @keyframes recPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
+        .recording-bar {
+            position: absolute; left: 9px; right: 9px; bottom: 62px;
+            background: linear-gradient(135deg, rgba(255,60,60,0.18), rgba(255,60,60,0.08));
+            border: 1px solid rgba(255,90,90,0.35); border-radius: 14px; padding: 10px 14px;
+            display: none; align-items: center; gap: 10px; font-size: 12.5px; color: #ffb8b8; z-index: 200;
+        }
+        .recording-bar.show { display: flex; }
+        .rec-dot { width: 9px; height: 9px; border-radius: 50%; background: #ff4d4d; animation: recPulse 1s ease-in-out infinite; }
+
+        /* Emoji category tabs */
+        .emoji-tabs { display: flex; gap: 3px; overflow-x: auto; margin-bottom: 8px; padding-bottom: 2px; }
+        .emoji-tabs::-webkit-scrollbar { display: none; }
+        .emoji-tab {
+            flex-shrink: 0; background: rgba(0,132,255,0.06); border: 1px solid transparent; border-radius: 9px;
+            font-size: 16px; padding: 5px 9px; cursor: pointer;
+        }
+        .emoji-tab.active { background: rgba(0,132,255,0.22); border-color: rgba(0,132,255,0.4); }
+
+        .modal-input[readonly] { cursor: pointer; }
+        .tone-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+        .tone-item {
+            display: flex; align-items: center; gap: 10px; padding: 11px 13px; border-radius: 12px;
+            background: rgba(255,255,255,0.03); border: 1.5px solid var(--border); cursor: pointer;
+        }
+        .tone-item.active { border-color: #00d4ff; background: rgba(0,212,255,0.08); }
+        .tone-item span.tn { flex: 1; font-size: 12.5px; font-weight: 600; }
+        .tone-play { background: rgba(0,132,255,0.15); border: none; color: #00d4ff; width: 28px; height: 28px; border-radius: 8px; cursor: pointer; }
+        .modal-section-title { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); font-weight: 700; margin: 14px 0 8px; }
+        .attach-input-hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="chat-container">
+        <div class="top-glow"></div>
+        <div class="conn-status" id="connStatus">Menghubungkan...</div>
+
+        <div class="chat-header">
+            <div class="header-avatar-wrap">
+                <div class="online-ring"></div>
+                <div class="header-avatar" id="headerAvatar">
+                    <span id="avatarInitial">?</span>
+                </div>
+                <div class="online-dot"></div>
+            </div>
+            <div class="header-info">
+                <div class="header-title-row">
+                    <div class="header-title" id="headerTitle">NeoChat</div>
+                    <div class="verified-badge">✓</div>
+                </div>
+                <div class="header-status-row">
+                    <div class="status-pulse"></div>
+                    <div class="header-status">
+                        <span id="statusText">Online</span>
+                        <span class="online-count" id="onlineCount">1 online</span>
+                        <span class="fb-status-badge not-ready" id="fbStatusBadge">FB?</span>
+                    </div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" title="Notifikasi" id="notifBtn">🔔</button>
+                <button class="icon-btn" title="Panggilan" id="callBtn">📞</button>
+                <button class="icon-btn" title="Video" id="videoBtn">📹</button>
+                <div class="menu-container">
+                    <button class="icon-btn" id="menuBtn" title="Menu">⋮</button>
+                    <div class="menu-dropdown" id="menuDropdown">
+                        <button class="menu-item" id="changeName">
+                            <span class="mi-icon">✏️</span> Ganti Nama
+                        </button>
+                        <button class="menu-item" id="viewProfile">
+                            <span class="mi-icon">👤</span> Lihat Profil
+                        </button>
+                        <button class="menu-item" id="toggleNotif">
+                            <span class="mi-icon">🔔</span> Notifikasi
+                            <span class="mi-status on" id="notifStatus">ON</span>
+                        </button>
+                        <button class="menu-item" id="toggleSound">
+                            <span class="mi-icon">🔊</span> Suara Dering
+                            <span class="mi-status on" id="soundStatus">ON</span>
+                        </button>
+                        <button class="menu-item" id="openWaModalBtn">
+                            <span class="mi-icon">🟢</span> Sambungkan WhatsApp Asli
+                        </button>
+                        <button class="menu-item" id="openWaTargetModalBtn">
+                            <span class="mi-icon">📱</span> Nomor Tujuan WA
+                        </button>
+                        <button class="menu-item" id="toggleWaMode">
+                            <span class="mi-icon">🔀</span> Mode WhatsApp Asli
+                            <span class="mi-status off" id="waModeStatus">OFF</span>
+                        </button>
+                        <div class="menu-divider"></div>
+                        <button class="menu-item" id="openThemeModal">
+                            <span class="mi-icon">🎨</span> Ganti Tema Tampilan
+                        </button>
+                        <button class="menu-item" id="openRingtoneModal">
+                            <span class="mi-icon">🔔</span> Ganti Nada Dering
+                        </button>
+                        <div class="menu-divider"></div>
+                        <button class="menu-item" id="setupFirebase">
+                            <span class="mi-icon">⚙️</span> Cara Setup Firebase
+                        </button>
+                        <button class="menu-item" id="clearLocal">
+                            <span class="mi-icon">🧹</span> Bersihkan Lokal
+                        </button>
+                        <button class="menu-item" id="about">
+                            <span class="mi-icon">ℹ️</span> Tentang NeoChat
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-area" id="chatArea">
+            <div class="empty-state">
+                <div class="empty-visual">
+                    <div class="empty-ring"></div>
+                    <div class="empty-ring"></div>
+                    <div class="empty-ring"></div>
+                    <div class="empty-icon">💬</div>
+                </div>
+                <div class="empty-title">Chat Realtime</div>
+                <div class="empty-sub">Pesan muncul langsung + notifikasi & dering saat ada chat baru</div>
+                <div class="empty-hints">
+                    <span class="hint-chip">⚡ Realtime</span>
+                    <span class="hint-chip">🔔 Notifikasi</span>
+                    <span class="hint-chip">🔊 Dering</span>
+                    <span class="hint-chip">🌙 Dark Blue</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="emoji-picker" id="emojiPicker">
+            <div class="emoji-header">
+                <span>Sticker & Emoji</span>
+                <button class="emoji-close" id="emojiClose">✕</button>
+            </div>
+            <div class="emoji-tabs" id="emojiTabs"></div>
+            <div class="emoji-grid" id="emojiGrid"></div>
+        </div>
+
+        <div class="attach-menu" id="attachMenu">
+            <button class="attach-option" id="attachPhotoVideo"><span class="ao-icon">🖼️</span> Foto / Video</button>
+            <button class="attach-option" id="attachDocument"><span class="ao-icon">📄</span> Dokumen</button>
+        </div>
+
+        <div class="recording-bar" id="recordingBar">
+            <span class="rec-dot"></span>
+            <span>Merekam suara... <span id="recTimer">0:00</span></span>
+            <span style="margin-left:auto;opacity:0.8;">Lepas untuk kirim</span>
+        </div>
+
+        <input type="file" id="fileInputMedia" class="attach-input-hidden" accept="image/*,video/*">
+        <input type="file" id="fileInputDoc" class="attach-input-hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.txt,application/*">
+        <input type="file" id="fileInputRingtone" class="attach-input-hidden" accept="audio/*">
+
+        <div class="input-area">
+            <button class="tool-btn" id="attachBtn" title="Lampirkan">📎</button>
+            <div class="input-wrapper">
+                <input type="text" class="input-field" id="messageInput" placeholder="Tulis pesan..." autocomplete="off">
+                <button class="action-btn" id="emojiBtn" title="Emoji">😊</button>
+                <button class="action-btn" id="micBtn" title="Tahan untuk rekam suara">🎤</button>
+            </div>
+            <button class="send-btn" id="sendBtn" title="Kirim" disabled>➤</button>
+        </div>
+        <div class="bottom-bar"></div>
+    </div>
+
+    <div class="msg-ctx-menu" id="msgCtxMenu"></div>
+
+    <div class="modal" id="nameModal">
+        <div class="modal-content">
+            <div class="modal-icon-wrap">👤</div>
+            <div class="modal-title">Siapa Nama Anda?</div>
+            <div class="modal-subtitle">Masuk untuk chat realtime</div>
+            <input type="text" class="modal-input" id="nameInput" placeholder="Ketik nama kamu..." autocomplete="off">
+            <button class="modal-btn" id="confirmBtn" disabled>Masuk ke Chat</button>
+        </div>
+    </div>
+
+    <div class="modal" id="setupModal">
+        <div class="modal-content" style="max-width: 380px;">
+            <div class="modal-icon-wrap">⚙️</div>
+            <div class="modal-title">Setup Firebase</div>
+            <div class="modal-subtitle">Agar chat realtime antar device</div>
+            <div class="setup-guide" id="setupGuideContent">
+                <div id="fbConfigStatusBox"></div>
+                <h4>1. Buat Project Firebase</h4>
+                <ol>
+                    <li>Buka <code>https://console.firebase.google.com</code></li>
+                    <li>Klik <b>Add project</b> → isi nama project → Create</li>
+                    <li>Nonaktifkan Google Analytics (opsional) → Continue</li>
+                </ol>
+                <h4>2. Aktifkan Realtime Database</h4>
+                <ol>
+                    <li>Di sidebar kiri → <b>Build</b> → <b>Realtime Database</b></li>
+                    <li>Klik <b>Create Database</b></li>
+                    <li>Pilih lokasi (mis. Singapore / asia-southeast1)</li>
+                    <li>Mode: pilih <b>Start in test mode</b> dulu (untuk development)</li>
+                    <li>Klik Enable</li>
+                </ol>
+                <h4>3. Atur Rules (penting!)</h4>
+                <ol>
+                    <li>Tab <b>Rules</b> di Realtime Database</li>
+                    <li>Ganti isinya menjadi:</li>
+                </ol>
+                <code style="display:block;padding:8px;margin:6px 0;white-space:pre;">{
+  "rules": {
+    ".read": true,
+    ".write": true
+  }
+}</code>
+                <ol start="3">
+                    <li>Klik <b>Publish</b></li>
+                </ol>
+                <div class="note">⚠️ Rules di atas terbuka (siapa saja bisa baca/tulis). Untuk production, batasi dengan auth.</div>
+                <h4>4. Ambil Config Web App</h4>
+                <ol>
+                    <li>Klik ikon ⚙️ Project settings</li>
+                    <li>Scroll ke <b>Your apps</b> → klik ikon <b>&lt;/&gt;</b> (Web)</li>
+                    <li>Isi App nickname (mis. NeoChat) → Register app</li>
+                    <li>Copy object <code>firebaseConfig</code> yang muncul</li>
+                </ol>
+                <h4>5. Tempel ke file ini</h4>
+                <ol>
+                    <li>Buka file <code>chat.html</code> di editor</li>
+                    <li>Cari bagian <code>const firebaseConfig = { ... }</code></li>
+                    <li>Ganti semua nilai <code>GANTI_DENGAN_...</code> dengan config dari Firebase</li>
+                    <li>Pastikan <code>databaseURL</code> ada (biasanya <code>https://PROJECT-ID-default-rtdb.REGION.firebasedatabase.app</code>)</li>
+                    <li>Simpan file, refresh browser</li>
+                </ol>
+                <div class="success-note">✅ Setelah config benar, badge di header berubah jadi <b>FB READY</b> dan status "● Terhubung". Pesan akan sinkron realtime antar browser/device.</div>
+                <div class="note">💡 Tanpa Firebase, chat tetap bisa dipakai di <b>Mode Lokal</b> (hanya di browser ini, data disimpan di localStorage).</div>
+            </div>
+            <button class="modal-btn" id="closeSetupBtn" style="margin-top:16px;">Mengerti</button>
+        </div>
+    </div>
+
+    <div class="modal" id="themeModal">
+        <div class="modal-content">
+            <div class="modal-icon-wrap">🎨</div>
+            <div class="modal-title">Tema Tampilan</div>
+            <div class="modal-subtitle">Pilih warna favoritmu</div>
+            <div class="theme-grid" id="themeGrid"></div>
+            <button class="modal-btn" id="closeThemeBtn" style="margin-top:6px;">Selesai</button>
+        </div>
+    </div>
+
+    <div class="modal" id="ringtoneModal">
+        <div class="modal-content" style="max-width: 380px;">
+            <div class="modal-icon-wrap">🔔</div>
+            <div class="modal-title">Nada Dering</div>
+            <div class="modal-subtitle">Pilih atau atur nada notifikasi</div>
+
+            <div class="modal-section-title">Nada Bawaan</div>
+            <div class="tone-list" id="toneList"></div>
+
+            <div class="modal-section-title">Upload Audio Sendiri</div>
+            <button class="attach-option" id="uploadRingtoneBtn" style="width:100%;border:1.5px solid var(--border);border-radius:12px;margin-bottom:6px;">
+                <span class="ao-icon">📁</span> Pilih file audio (mp3/ogg, maks 800KB)
+            </button>
+            <div id="ringtoneFileName" style="font-size:11px;color:var(--text-muted);margin-bottom:10px;"></div>
+
+            <div class="modal-section-title">Link Audio Langsung</div>
+            <input type="text" class="modal-input" id="ringtoneUrlInput" placeholder="https://.../suara.mp3" style="margin-bottom:8px;">
+            <button class="modal-btn" id="applyRingtoneUrlBtn" style="margin-bottom:6px;">Pakai Link Ini</button>
+            <div class="note" style="margin-top:2px;">💡 Link TikTok (tiktok.com/...) tidak bisa diputar langsung sebagai nada dering karena TikTok memblokir akses audio dari luar aplikasinya (CORS). Cara yang berhasil: buka video di TikTok → <b>Save video/Save sound</b>, lalu ekstrak audionya jadi file mp3 (mis. lewat app konverter), lalu upload file itu pakai tombol "Upload Audio Sendiri" di atas.</div>
+
+            <button class="modal-btn" id="closeRingtoneBtn" style="margin-top:16px;">Selesai</button>
+        </div>
+    </div>
+
+    <div class="modal" id="waModal">
+        <div class="modal-content" style="max-width: 380px;">
+            <div class="modal-icon-wrap">🟢</div>
+            <div class="modal-title">Sambungkan WhatsApp</div>
+            <div class="modal-subtitle" id="waModalSubtitle">Menunggu server backend...</div>
+
+            <!-- Tab pilih metode -->
+            <div id="waMethodTabs" style="display:flex;gap:6px;margin:12px 0 14px;background:rgba(0,132,255,0.06);border-radius:12px;padding:4px;">
+                <button type="button" class="wa-tab active" id="waTabQr" style="flex:1;padding:8px 6px;border:none;border-radius:10px;background:linear-gradient(135deg,#00d4ff,#0084ff);color:#fff;font-size:12px;font-weight:600;cursor:pointer;">📷 Scan QR</button>
+                <button type="button" class="wa-tab" id="waTabPair" style="flex:1;padding:8px 6px;border:none;border-radius:10px;background:transparent;color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;">🔑 Pairing Code</button>
+            </div>
+
+            <!-- Panel QR -->
+            <div id="waPanelQr">
+                <div style="display:flex;justify-content:center;margin-bottom:12px;">
+                    <img id="waQrImg" src="" alt="QR WhatsApp" style="width:220px;height:220px;border-radius:12px;display:none;background:#fff;padding:8px;">
+                    <div id="waStatusIcon" style="font-size:48px;padding:40px 0;display:none;"></div>
+                </div>
+                <div class="note" id="waModalNote">1. Pastikan server backend (<code>npm start</code>) sudah jalan.<br>2. Di HP: WhatsApp → <b>Pengaturan → Perangkat Tertaut → Tautkan Perangkat</b>.<br>3. Scan QR di atas.</div>
+            </div>
+
+            <!-- Panel Pairing Code -->
+            <div id="waPanelPair" style="display:none;">
+                <div class="note" style="margin-bottom:10px;">Masukkan nomor WhatsApp <b>kamu sendiri</b> (yang mau di-link), lalu minta kode. Di HP pilih <b>Tautkan dengan nomor telepon</b>.</div>
+                <input type="text" class="modal-input" id="waPairPhoneInput" placeholder="Contoh: 628123456789" inputmode="numeric" autocomplete="tel" style="margin-bottom:10px;">
+                <button class="modal-btn" id="waRequestPairBtn" type="button" style="margin-bottom:12px;">Minta Kode Pairing</button>
+                <div id="waPairCodeBox" style="display:none;text-align:center;padding:16px 10px;background:rgba(0,212,255,0.08);border:1px dashed rgba(0,212,255,0.35);border-radius:14px;margin-bottom:10px;">
+                    <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;font-weight:600;letter-spacing:0.5px;">KODE PAIRING</div>
+                    <div id="waPairCodeText" style="font-size:28px;font-weight:800;letter-spacing:4px;color:#00d4ff;font-family:monospace;"></div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">Masukkan kode ini di HP kamu</div>
+                </div>
+                <div class="note" id="waPairNote">Format nomor: kode negara + nomor tanpa 0 di depan (contoh Indonesia: 62812...).</div>
+            </div>
+
+            <button class="modal-btn" id="closeWaModalBtn" style="margin-top:14px;background:rgba(255,255,255,0.06);border:1px solid var(--border);">Tutup</button>
+        </div>
+    </div>
+
+    <div class="modal" id="waTargetModal">
+        <div class="modal-content">
+            <div class="modal-icon-wrap">📱</div>
+            <div class="modal-title">Nomor WhatsApp Tujuan</div>
+            <div class="modal-subtitle">Pesan dari web ini dikirim ke nomor ini</div>
+            <input type="text" class="modal-input" id="waTargetInput" placeholder="Contoh: 628123456789" autocomplete="off">
+            <button class="modal-btn" id="saveWaTargetBtn">Simpan</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+    <script>
+
+        // ===== Fix: viewport height agar input chat tidak ketutup keyboard / browser bar =====
+        function setAppHeight() {
+            const h = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+            document.documentElement.style.setProperty('--app-height', h + 'px');
+        }
+        setAppHeight();
+        window.addEventListener('resize', setAppHeight);
+        window.addEventListener('orientationchange', () => setTimeout(setAppHeight, 120));
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', setAppHeight);
+        }
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC14D1LrjhwpFfdhoF6iGYAh4w5tglHnm8",
+  authDomain: "published-chat-rd-9445f.firebaseapp.com",
+  databaseURL: "https://published-chat-rd-9445f-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "published-chat-rd-9445f",
+  storageBucket: "published-chat-rd-9445f.firebasestorage.app",
+  messagingSenderId: "190578225472",
+  appId: "1:190578225472:web:bbe7e61a3ebbda20658aa5",
+  measurementId: "G-PQHJPEZG38"
+};
+
+        function isFirebaseConfigured() {
+            const c = firebaseConfig;
+            if (!c || !c.apiKey) return false;
+            const placeholders = ['GANTI_DENGAN', 'YOUR_', 'xxx', 'PLACEHOLDER'];
+            const vals = [c.apiKey, c.projectId, c.databaseURL, c.appId].join(' ');
+            return !placeholders.some(p => vals.includes(p));
+        }
+
+
+        const EMOJI_CATEGORIES = {
+            '😀': ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍','🤩','😘','😗','😚','😙','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','😎','🤓','🧐','😕','😟','🙁','☹️','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖'],
+            '👍': ['👋','🤚','🖐️','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🙏','✍️','💅','🤳','💪','🦾','🦵','🦶','👂','🦻','👃','🧠','🦷','🦴','👀','👁️','👅','👄','💋','🩸','👶','🧒','👦','👧','🧑','👱','👨','🧔','👩','🧓','👴','👵','🙍','🙎','🙅','🙆','💁','🙋','🧏','🙇','🤦','🤷','👮','🕵️','💂','👷','🤴','👸','👳','👲','🧕','🤵','👰','🤰','🤱','👼','🎅','🤶','🦸','🦹','🧙','🧚','🧛','🧜','🧝','🧞','🧟'],
+            '🐶': ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐻‍❄️','🐨','🐯','🦁','🐮','🐷','🐽','🐸','🐵','🙈','🙉','🙊','🐒','🐔','🐧','🐦','🐤','🐣','🐥','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🪲','🐛','🦋','🐌','🐞','🐜','🪰','🦟','🦗','🕷️','🕸️','🐢','🐍','🦎','🦖','🦕','🐙','🦑','🦐','🦞','🦀','🐡','🐠','🐟','🐬','🐳','🐋','🦈','🐊','🐅','🐆','🦓','🦍','🦧','🐘','🦣','🦛','🦏','🐪','🐫','🦒','🦘','🐃','🐂','🐄','🐎','🐖','🐏','🐑','🦙','🐐','🦌','🐕','🐩','🐈','🐓','🦃','🦤','🦚','🦜','🦢','🦩','🕊️','🐇','🦝','🦨','🦡','🦫','🦦','🦥','🐁','🐀','🐿️','🦔'],
+            '🍎': ['🍏','🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑','🥦','🥬','🥒','🌶️','🫑','🌽','🥕','🧄','🧅','🥔','🍠','🥐','🥯','🍞','🥖','🥨','🧀','🥚','🍳','🧈','🥞','🧇','🥓','🥩','🍗','🍖','🌭','🍔','🍟','🍕','🫓','🥪','🥙','🧆','🌮','🌯','🥗','🥘','🫕','🥫','🍝','🍜','🍲','🍛','🍣','🍱','🥟','🍤','🍙','🍚','🍘','🍥','🥠','🥮','🍢','🍡','🍧','🍨','🍦','🥧','🧁','🍰','🎂','🍮','🍭','🍬','🍫','🍿','🍩','🍪','🌰','🥜','🍯','🥛','🍼','☕','🍵','🧃','🥤','🍶','🍺','🍻','🥂','🍷','🥃','🍸','🍹','🧉','🍾'],
+            '⚽': ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🪀','🏓','🏸','🏒','🏑','🥍','🏏','🪃','🥅','⛳','🪁','🏹','🎣','🤿','🥊','🥋','🎽','🛹','🛼','🛷','⛸️','🥌','🎿','⛷️','🏂','🪂','🏋️','🤼','🤸','⛹️','🤺','🤾','🏌️','🏇','🧘','🏄','🏊','🤽','🚣','🧗','🚵','🚴','🏆','🥇','🥈','🥉','🏅','🎖️','🏵️','🎗️','🎫','🎟️','🎪','🤹','🎭','🩰','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🪘','🎷','🎺','🪗','🎸','🪕','🎻','🎲','♟️','🎯','🎳','🎮','🎰'],
+            '🚗': ['🚗','🚕','🚙','🚌','🚎','🏎️','🚓','🚑','🚒','🚐','🛻','🚚','🚛','🚜','🦯','🦽','🦼','🛴','🚲','🛵','🏍️','🛺','🚨','🚔','🚍','🚘','🚖','🚡','🚠','🚟','🚃','🚋','🚞','🚝','🚄','🚅','🚈','🚂','🚆','🚇','🚊','🚉','✈️','🛫','🛬','🛩️','💺','🛰️','🚀','🛸','🚁','🛶','⛵','🚤','🛥️','🛳️','⛴️','🚢','⚓','🪝','⛽','🚧','🚦','🚥','🗺️','🗿','🗽','🗼','🏰','🏯','🏟️','🎡','🎢','🎠','⛲','⛱️','🏖️','🏝️','🏜️','🌋','⛰️','🏔️','🗻','🏕️','⛺','🏠','🏡','🏘️','🏚️','🏗️','🏭','🏢','🏬','🏣','🏤','🏥','🏦','🏨','🏪','🏫','🏩','💒','🏛️','⛪','🕌','🕍','🛕','🕋'],
+            '💡': ['⌚','📱','💻','⌨️','🖥️','🖨️','🖱️','🖲️','🕹️','💽','💾','💿','📀','📼','📷','📸','📹','🎥','📞','☎️','📟','📠','📺','📻','🎙️','🎚️','🎛️','🧭','⏱️','⏲️','⏰','🕰️','⌛','⏳','📡','🔋','🔌','💡','🔦','🕯️','🪔','🧯','🛢️','💸','💵','💴','💶','💷','🪙','💰','💳','💎','⚖️','🪜','🧰','🔧','🔨','⚒️','🛠️','⛏️','🪓','🪚','🔩','⚙️','🪤','🧱','⛓️','🧲','🔫','💣','🧨','🪃','🔪','🗡️','⚔️','🛡️','🚬','⚰️','🪦','⚱️','🏺','🔮','📿','🧿','💈','⚗️','🔭','🔬','🕳️','💊','💉','🩸','🧬','🦠','🧫','🧪','🌡️','🧹','🪠','🧺','🧻','🚽','🚰','🚿','🛁','🛀','🧼','🪥','🪒','🧴','🧷','🧵','🪡','🧶','🪢'],
+            '❤️': ['❤️','🧡','💛','💚','💙','💜','🤎','🖤','🤍','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','☮️','✝️','☪️','🕉️','☸️','✡️','🔯','🕎','☯️','☦️','🛐','⛎','♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓','🆔','⚛️','🉑','☢️','☣️','📴','📳','🈶','🈚','🈸','🈺','🈷️','✴️','🆚','💮','🉐','㊙️','㊗️','🈴','🈵','🈹','🈲','🅰️','🅱️','🆎','🆑','🅾️','🆘','❌','⭕','🛑','⛔','📛','🚫','💯','💢','♨️','🚷','🚯','🚳','🚱','🔞','📵','🚭','❗','❕','❓','❔','‼️','⁉️','🔅','🔆','〽️','⚠️','🚸','🔱','⚜️','🔰','✅','🈯','💹','❇️','✳️','❎','🌐','💠','Ⓜ️','🌀','💤','🏧','🚾','♿','🅿️','🛗','🈳'],
+            '🏳️': ['🏳️','🏴','🏁','🚩','🏳️‍🌈','🏳️‍⚧️','🇮🇩','🇺🇸','🇬🇧','🇯🇵','🇰🇷','🇨🇳','🇸🇦','🇮🇳','🇧🇷','🇩🇪','🇫🇷','🇪🇸','🇮🇹','🇷🇺','🇦🇺','🇨🇦','🇲🇾','🇸🇬','🇹🇭','🇻🇳','🇵🇭','🇳🇱','🇹🇷','🇪🇬']
+        };
+        const EMOJI_CATEGORY_LABELS = { '😀': 'Smiley', '👍': 'Gestur', '🐶': 'Hewan', '🍎': 'Makanan', '⚽': 'Aktivitas', '🚗': 'Travel', '💡': 'Objek', '❤️': 'Simbol', '🏳️': 'Bendera' };
+        let activeEmojiCat = '😀';
+
+        const THEMES = [
+            { id: 'blue', name: 'Blue Black', c1: '#00d4ff', c2: '#0084ff' },
+            { id: 'purple', name: 'Purple', c1: '#c77dff', c2: '#7b2cbf' },
+            { id: 'emerald', name: 'Emerald', c1: '#2fe6a0', c2: '#0a8f5c' },
+            { id: 'sunset', name: 'Sunset', c1: '#ff9d4d', c2: '#cc4a1f' },
+            { id: 'rose', name: 'Rose', c1: '#ff6fb0', c2: '#c4166a' }
+        ];
+
+        const RINGTONES = [
+            { id: 'default', name: 'Default (Synth Chord)' },
+            { id: 'classic', name: 'Classic Bell' },
+            { id: 'chime', name: 'Soft Chime' },
+            { id: 'pop', name: 'Pop Click' }
+        ];
+
+        const MAX_ATTACH_BYTES = 3 * 1024 * 1024; // 3MB batas aman untuk Firebase RTDB / localStorage
+        const MAX_ATTACH_BYTES_WA = 20 * 1024 * 1024; // 20MB saat mode WhatsApp Asli (lewat Socket.IO)
+        const MAX_RINGTONE_BYTES = 800 * 1024; // 800KB batas nada dering custom
+
+        const chatArea = document.getElementById('chatArea');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const emojiBtn = document.getElementById('emojiBtn');
+        const attachBtn = document.getElementById('attachBtn');
+        const micBtn = document.getElementById('micBtn');
+        const emojiPicker = document.getElementById('emojiPicker');
+        const emojiGrid = document.getElementById('emojiGrid');
+        const emojiClose = document.getElementById('emojiClose');
+        const nameModal = document.getElementById('nameModal');
+        const nameInput = document.getElementById('nameInput');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const menuBtn = document.getElementById('menuBtn');
+        const menuDropdown = document.getElementById('menuDropdown');
+        const headerTitle = document.getElementById('headerTitle');
+        const avatarInitial = document.getElementById('avatarInitial');
+        const toastEl = document.getElementById('toast');
+        const connStatus = document.getElementById('connStatus');
+        const onlineCountEl = document.getElementById('onlineCount');
+        const notifBtn = document.getElementById('notifBtn');
+        const notifStatusEl = document.getElementById('notifStatus');
+        const soundStatusEl = document.getElementById('soundStatus');
+        const fbStatusBadge = document.getElementById('fbStatusBadge');
+        const setupModal = document.getElementById('setupModal');
+        const closeSetupBtn = document.getElementById('closeSetupBtn');
+        const emojiTabs = document.getElementById('emojiTabs');
+        const attachMenu = document.getElementById('attachMenu');
+        const fileInputMedia = document.getElementById('fileInputMedia');
+        const fileInputDoc = document.getElementById('fileInputDoc');
+        const fileInputRingtone = document.getElementById('fileInputRingtone');
+        const recordingBar = document.getElementById('recordingBar');
+        const recTimerEl = document.getElementById('recTimer');
+        const msgCtxMenu = document.getElementById('msgCtxMenu');
+        const themeModal = document.getElementById('themeModal');
+        const themeGrid = document.getElementById('themeGrid');
+        const closeThemeBtn = document.getElementById('closeThemeBtn');
+        const ringtoneModal = document.getElementById('ringtoneModal');
+        const toneList = document.getElementById('toneList');
+        const uploadRingtoneBtn = document.getElementById('uploadRingtoneBtn');
+        const ringtoneFileName = document.getElementById('ringtoneFileName');
+        const ringtoneUrlInput = document.getElementById('ringtoneUrlInput');
+        const applyRingtoneUrlBtn = document.getElementById('applyRingtoneUrlBtn');
+        const closeRingtoneBtn = document.getElementById('closeRingtoneBtn');
+        const waModal = document.getElementById('waModal');
+        const waModalSubtitle = document.getElementById('waModalSubtitle');
+        const waQrImg = document.getElementById('waQrImg');
+        const waStatusIcon = document.getElementById('waStatusIcon');
+        const closeWaModalBtn = document.getElementById('closeWaModalBtn');
+        const waTargetModal = document.getElementById('waTargetModal');
+        const waTargetInput = document.getElementById('waTargetInput');
+        const saveWaTargetBtn = document.getElementById('saveWaTargetBtn');
+        const waModeStatusEl = document.getElementById('waModeStatus');
+
+        let userName = localStorage.getItem('neoChatName') || '';
+        let userId = localStorage.getItem('neoChatUserId') || ('u_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
+        localStorage.setItem('neoChatUserId', userId);
+
+        let db = null;
+        let messagesRef = null;
+        let presenceRef = null;
+        let messages = [];
+        let onlineUsers = {};
+        let lastMsgCount = 0;
+        let isFirstLoad = true;
+        let firebaseReady = false; // true hanya jika benar-benar terhubung ke RTDB
+        let usingLocalMode = false;
+
+        // Notification & Sound settings
+        let notifEnabled = localStorage.getItem('neoChatNotif') !== 'false';
+        let soundEnabled = localStorage.getItem('neoChatSound') !== 'false';
+        let notifPermission = Notification.permission;
+
+        // Audio context for ringtone
+        let audioCtx = null;
+
+        // Theme & ringtone state
+        let currentTheme = localStorage.getItem('neoChatTheme') || 'blue';
+        let ringtoneMode = localStorage.getItem('neoChatRingtoneMode') || 'default';
+        let customRingtoneSrc = localStorage.getItem('neoChatRingtoneCustom') || '';
+
+        // Recording state
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let isRecording = false;
+        let recordStartTs = 0;
+        let recTimerInterval = null;
+        let micHoldTimer = null;
+
+        // ===== WhatsApp Bridge (Baileys backend) =====
+        let waMode = localStorage.getItem('neoChatWaMode') === 'true';
+        let waTargetNumber = localStorage.getItem('neoChatWaTarget') || '';
+        let waConnStatus = 'disconnected'; // disconnected | connecting | qr | pairing | connected
+        let socket = null;
+        let waActiveTab = 'qr'; // qr | pair
+
+        if (typeof io === 'function') {
+            try {
+                socket = io({ transports: ['websocket', 'polling'] });
+
+                socket.on('connect', () => {
+                    console.log('Terhubung ke server WhatsApp Bridge');
+                });
+                socket.on('connect_error', () => {
+                    // Server backend belum jalan / tidak bisa dijangkau — biarkan diam
+                });
+                socket.on('qr', (dataUrl) => {
+                    waConnStatus = 'qr';
+                    if (waQrImg) {
+                        waQrImg.src = dataUrl;
+                        waQrImg.style.display = 'block';
+                    }
+                    if (waStatusIcon) waStatusIcon.style.display = 'none';
+                    if (waModalSubtitle) waModalSubtitle.textContent = 'Scan QR ini pakai WhatsApp di HP kamu';
+                    // sembunyikan kode pairing jika ada QR baru
+                    const box = document.getElementById('waPairCodeBox');
+                    if (box) box.style.display = 'none';
+                });
+                socket.on('pairing-code', (code) => {
+                    if (!code) {
+                        const box = document.getElementById('waPairCodeBox');
+                        if (box) box.style.display = 'none';
+                        return;
+                    }
+                    waConnStatus = 'pairing';
+                    const box = document.getElementById('waPairCodeBox');
+                    const txt = document.getElementById('waPairCodeText');
+                    if (box && txt) {
+                        txt.textContent = code;
+                        box.style.display = 'block';
+                    }
+                    if (waModalSubtitle) waModalSubtitle.textContent = 'Masukkan kode pairing di HP kamu';
+                    if (waQrImg) waQrImg.style.display = 'none';
+                    if (waStatusIcon) waStatusIcon.style.display = 'none';
+                });
+                socket.on('wa-status', (status) => {
+                    waConnStatus = status;
+                    if (status === 'connected') {
+                        if (waQrImg) waQrImg.style.display = 'none';
+                        if (waStatusIcon) {
+                            waStatusIcon.style.display = 'block';
+                            waStatusIcon.textContent = '✅';
+                        }
+                        if (waModalSubtitle) waModalSubtitle.textContent = 'WhatsApp terhubung!';
+                        const box = document.getElementById('waPairCodeBox');
+                        if (box) box.style.display = 'none';
+                        // sembunyikan tab metode setelah terhubung
+                        const tabs = document.getElementById('waMethodTabs');
+                        if (tabs) tabs.style.display = 'none';
+                        document.getElementById('waPanelQr') && (document.getElementById('waPanelQr').style.display = 'block');
+                        document.getElementById('waPanelPair') && (document.getElementById('waPanelPair').style.display = 'none');
+                        showToast('WhatsApp berhasil terhubung', '✅');
+                    } else if (status === 'disconnected') {
+                        if (waQrImg) waQrImg.style.display = 'none';
+                        if (waStatusIcon) {
+                            waStatusIcon.style.display = 'block';
+                            waStatusIcon.textContent = '❌';
+                        }
+                        if (waModalSubtitle) waModalSubtitle.textContent = 'Terputus dari WhatsApp';
+                        const tabs = document.getElementById('waMethodTabs');
+                        if (tabs) tabs.style.display = 'flex';
+                    } else if (status === 'connecting') {
+                        if (waModalSubtitle) waModalSubtitle.textContent = 'Menghubungkan ke WhatsApp...';
+                    } else if (status === 'pairing') {
+                        if (waModalSubtitle) waModalSubtitle.textContent = 'Menunggu kamu masukkan kode di HP...';
+                    } else if (status === 'qr') {
+                        if (waModalSubtitle) waModalSubtitle.textContent = 'Scan QR ini pakai WhatsApp di HP kamu';
+                    }
+                });
+                socket.on('incoming-message', (payload) => {
+                    const msg = {
+                        id: 'wa_in_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                        text: payload.text || '',
+                        sender: payload.sender || payload.from,
+                        senderId: payload.from,
+                        time: payload.time,
+                        timestamp: payload.timestamp || Date.now(),
+                        isSticker: false,
+                        type: payload.type,
+                        fileName: payload.fileName,
+                        fileSize: payload.fileSize,
+                        fileData: payload.fileData,
+                        isPtt: !!payload.isPtt,
+                        isStickerMedia: !!payload.isStickerMedia
+                    };
+                    if (msg.type === 'text') delete msg.type;
+                    messages.push(msg);
+                    // Untuk media besar dari WA, jangan simpan fileData penuh ke localStorage (bisa penuh)
+                    try {
+                        if (msg.fileData && msg.fileSize && msg.fileSize > 1.5 * 1024 * 1024) {
+                            const slim = { ...msg, fileData: null, _largeMedia: true };
+                            // tetap tampilkan di sesi ini, tapi localStorage tanpa base64 besar
+                            const existing = JSON.parse(localStorage.getItem('neoChatLocalMsgs') || '[]');
+                            existing.push(slim);
+                            // batasi jumlah pesan lokal
+                            while (existing.length > 80) existing.shift();
+                            localStorage.setItem('neoChatLocalMsgs', JSON.stringify(existing));
+                        } else {
+                            saveLocalMessages();
+                        }
+                    } catch (e) {
+                        console.warn('save local (media) gagal', e);
+                    }
+                    renderMessages();
+                    scrollToBottom();
+                    onNewMessage(msg);
+                });
+            } catch (e) {
+                console.warn('Socket.IO gagal diinisialisasi', e);
+                socket = null;
+            }
+        }
+
+        function switchWaTab(tab) {
+            waActiveTab = tab;
+            const tabQr = document.getElementById('waTabQr');
+            const tabPair = document.getElementById('waTabPair');
+            const panelQr = document.getElementById('waPanelQr');
+            const panelPair = document.getElementById('waPanelPair');
+            if (!tabQr || !tabPair) return;
+            if (tab === 'qr') {
+                tabQr.style.background = 'linear-gradient(135deg,#00d4ff,#0084ff)';
+                tabQr.style.color = '#fff';
+                tabPair.style.background = 'transparent';
+                tabPair.style.color = 'var(--text-muted)';
+                if (panelQr) panelQr.style.display = 'block';
+                if (panelPair) panelPair.style.display = 'none';
+            } else {
+                tabPair.style.background = 'linear-gradient(135deg,#00d4ff,#0084ff)';
+                tabPair.style.color = '#fff';
+                tabQr.style.background = 'transparent';
+                tabQr.style.color = 'var(--text-muted)';
+                if (panelQr) panelQr.style.display = 'none';
+                if (panelPair) panelPair.style.display = 'block';
+            }
+        }
+
+        function requestPairingCode() {
+            if (!socket) {
+                showToast('Server WhatsApp Bridge belum jalan', '⚠️');
+                return;
+            }
+            const input = document.getElementById('waPairPhoneInput');
+            const phone = (input && input.value || '').trim();
+            if (!phone) {
+                showToast('Isi nomor WhatsApp kamu dulu', '✏️');
+                return;
+            }
+            const btn = document.getElementById('waRequestPairBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Meminta kode...';
+            }
+            socket.emit('request-pairing-code', { phone }, (res) => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Minta Kode Pairing';
+                }
+                if (!res || !res.ok) {
+                    showToast((res && res.error) || 'Gagal minta pairing code', '❌');
+                    return;
+                }
+                showToast(res.cached ? 'Kode pairing (dari cache)' : 'Kode pairing siap — masukkan di HP', '🔑');
+            });
+        }
+
+        function sendToWhatsApp(msg) {
+            if (!socket) {
+                showToast('Server WhatsApp Bridge belum jalan. Lihat README wa-bridge.', '⚠️');
+                return;
+            }
+            if (!waTargetNumber) {
+                showToast('Atur dulu nomor WhatsApp tujuan (Menu ⋮ → Nomor Tujuan WA)', '📵');
+                return;
+            }
+            msg.id = msg.id || ('wa_out_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
+            messages.push(msg);
+            saveLocalMessages();
+            lastMsgCount = messages.length;
+            renderMessages();
+            scrollToBottom();
+
+            socket.emit('send-message', {
+                to: waTargetNumber,
+                type: msg.type || 'text',
+                text: msg.text || '',
+                fileName: msg.fileName,
+                fileData: msg.fileData,
+                mimeType: msg.mimeType || undefined
+            }, (res) => {
+                if (!res || !res.ok) {
+                    showToast('Gagal kirim ke WhatsApp: ' + (res && res.error ? res.error : 'tidak diketahui'), '❌');
+                }
+            });
+        }
+
+        function updateWaModeUI() {
+            waModeStatusEl.textContent = waMode ? 'ON' : 'OFF';
+            waModeStatusEl.className = 'mi-status ' + (waMode ? 'on' : 'off');
+        }
+
+        function toggleWaMode() {
+            if (!waMode && !socket) {
+                showToast('Server WhatsApp Bridge belum jalan. Lihat README wa-bridge.', '⚠️');
+                closeMenu();
+                return;
+            }
+            waMode = !waMode;
+            localStorage.setItem('neoChatWaMode', waMode);
+            updateWaModeUI();
+            showToast(waMode ? 'Mode WhatsApp Asli aktif' : 'Mode WhatsApp Asli nonaktif, kembali ke NeoChat', waMode ? '🟢' : '🔵');
+            closeMenu();
+        }
+
+        function init() {
+            renderEmojiTabs();
+            renderEmojiGrid();
+            attachEventListeners();
+            updateNotifUI();
+            updateFbStatusUI(isFirebaseConfigured() ? 'connecting' : 'not-ready');
+            applyTheme(currentTheme, false);
+            renderThemeGrid();
+            renderToneList();
+            updateWaModeUI();
+
+            if (!userName) {
+                showNameModal();
+            } else {
+                updateHeaderInfo();
+                startFirebase();
+                requestNotifPermission();
+            }
+        }
+
+        function ensureAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Generate notification sounds (no external file needed) + support custom uploaded/URL audio
+        function playRingtone(previewId) {
+            if (!soundEnabled && !previewId) return;
+            const mode = previewId || ringtoneMode;
+
+            if (mode === 'custom-upload' || mode === 'custom-url') {
+                if (!customRingtoneSrc) { playSynthTone('default'); return; }
+                try {
+                    const a = new Audio(customRingtoneSrc);
+                    a.volume = 0.8;
+                    a.play().catch(err => {
+                        console.warn('Custom ringtone play failed', err);
+                        showToast('Gagal memutar audio custom, kembali ke nada default', '⚠️');
+                        playSynthTone('default');
+                    });
+                } catch (e) {
+                    console.warn(e);
+                    playSynthTone('default');
+                }
+                return;
+            }
+            playSynthTone(mode);
+        }
+
+        function playSynthTone(kind) {
+            try {
+                ensureAudio();
+                const now = audioCtx.currentTime;
+                const tone = (freq, start, dur, type, peak) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = type || 'sine';
+                    osc.frequency.setValueAtTime(freq, now + start);
+                    gain.gain.setValueAtTime(0, now + start);
+                    gain.gain.linearRampToValueAtTime(peak || 0.22, now + start + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + start + dur);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.start(now + start); osc.stop(now + start + dur + 0.02);
+                };
+                if (kind === 'classic') {
+                    tone(1046.5, 0, 0.18, 'sine', 0.25);
+                    tone(1318.5, 0.16, 0.22, 'sine', 0.22);
+                } else if (kind === 'chime') {
+                    tone(784, 0, 0.3, 'sine', 0.18);
+                    tone(988, 0.1, 0.3, 'sine', 0.15);
+                    tone(1318.5, 0.2, 0.4, 'sine', 0.14);
+                } else if (kind === 'pop') {
+                    tone(1800, 0, 0.06, 'triangle', 0.3);
+                    tone(2200, 0.04, 0.08, 'triangle', 0.18);
+                } else {
+                    tone(880, 0, 0.35, 'sine', 0.25);
+                    tone(1174.66, 0.08, 0.4, 'sine', 0.18);
+                    tone(1800, 0, 0.08, 'triangle', 0.08);
+                }
+            } catch (e) {
+                console.warn('Audio play failed', e);
+            }
+        }
+
+        function showBrowserNotif(title, body) {
+            if (!notifEnabled || notifPermission !== 'granted') return;
+            if (document.visibilityState === 'visible') return; // only when tab hidden
+
+            try {
+                const n = new Notification(title, {
+                    body: body,
+                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%230084ff"/><text x="50" y="62" font-size="40" text-anchor="middle" fill="white">💬</text></svg>',
+                    badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%2300d4ff"/></svg>',
+                    tag: 'neochat-msg',
+                    renotify: true,
+                    silent: true // we play our own sound
+                });
+                n.onclick = () => {
+                    window.focus();
+                    n.close();
+                };
+                setTimeout(() => n.close(), 5000);
+            } catch (e) {
+                console.warn('Notification failed', e);
+            }
+        }
+
+        function requestNotifPermission() {
+            if (!('Notification' in window)) return;
+            if (Notification.permission === 'default') {
+                Notification.requestPermission().then(perm => {
+                    notifPermission = perm;
+                    updateNotifUI();
+                    if (perm === 'granted') {
+                        showToast('Notifikasi diizinkan', '🔔');
+                    }
+                });
+            } else {
+                notifPermission = Notification.permission;
+                updateNotifUI();
+            }
+        }
+
+        function updateNotifUI() {
+            notifStatusEl.textContent = notifEnabled && notifPermission === 'granted' ? 'ON' : 'OFF';
+            notifStatusEl.className = 'mi-status ' + (notifEnabled && notifPermission === 'granted' ? 'on' : 'off');
+            soundStatusEl.textContent = soundEnabled ? 'ON' : 'OFF';
+            soundStatusEl.className = 'mi-status ' + (soundEnabled ? 'on' : 'off');
+
+            if (notifEnabled && notifPermission === 'granted') {
+                notifBtn.classList.add('active-notif');
+                notifBtn.textContent = '🔔';
+            } else {
+                notifBtn.classList.remove('active-notif');
+                notifBtn.textContent = '🔕';
+            }
+        }
+
+        function toggleNotif() {
+            if (notifPermission !== 'granted') {
+                requestNotifPermission();
+                return;
+            }
+            notifEnabled = !notifEnabled;
+            localStorage.setItem('neoChatNotif', notifEnabled);
+            updateNotifUI();
+            showToast(notifEnabled ? 'Notifikasi diaktifkan' : 'Notifikasi dimatikan', notifEnabled ? '🔔' : '🔕');
+            closeMenu();
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            localStorage.setItem('neoChatSound', soundEnabled);
+            updateNotifUI();
+            showToast(soundEnabled ? 'Suara dering aktif' : 'Suara dering dimatikan', soundEnabled ? '🔊' : '🔇');
+            if (soundEnabled) {
+                ensureAudio();
+                playRingtone(); // preview
+            }
+            closeMenu();
+        }
+
+        function applyTheme(themeId, notify) {
+            currentTheme = themeId;
+            if (themeId === 'blue') {
+                document.documentElement.removeAttribute('data-theme');
+            } else {
+                document.documentElement.setAttribute('data-theme', themeId);
+            }
+            localStorage.setItem('neoChatTheme', themeId);
+            renderThemeGrid();
+            if (notify) showToast('Tema diubah', '🎨');
+        }
+
+        function renderThemeGrid() {
+            if (!themeGrid) return;
+            themeGrid.innerHTML = '';
+            THEMES.forEach(t => {
+                const el = document.createElement('div');
+                el.className = 'theme-swatch' + (t.id === currentTheme ? ' active' : '');
+                el.innerHTML = `<div class="theme-dot" style="background:linear-gradient(135deg, ${t.c1}, ${t.c2});"></div><span>${t.name}</span>`;
+                el.onclick = () => applyTheme(t.id, true);
+                themeGrid.appendChild(el);
+            });
+        }
+
+        function renderToneList() {
+            if (!toneList) return;
+            toneList.innerHTML = '';
+            RINGTONES.forEach(t => {
+                const el = document.createElement('div');
+                el.className = 'tone-item' + (ringtoneMode === t.id ? ' active' : '');
+                el.innerHTML = `<span class="tn">${t.name}</span><button class="tone-play" type="button">▶</button>`;
+                el.querySelector('.tone-play').onclick = (e) => { e.stopPropagation(); ensureAudio(); playRingtone(t.id); };
+                el.onclick = () => {
+                    ringtoneMode = t.id;
+                    localStorage.setItem('neoChatRingtoneMode', ringtoneMode);
+                    renderToneList();
+                    showToast(`Nada dering: ${t.name}`, '🔔');
+                    ensureAudio(); playRingtone(t.id);
+                };
+                toneList.appendChild(el);
+            });
+            if (customRingtoneSrc) {
+                const el = document.createElement('div');
+                const active = (ringtoneMode === 'custom-upload' || ringtoneMode === 'custom-url');
+                el.className = 'tone-item' + (active ? ' active' : '');
+                el.innerHTML = `<span class="tn">🎵 Audio Custom Saya</span><button class="tone-play" type="button">▶</button>`;
+                el.querySelector('.tone-play').onclick = (e) => { e.stopPropagation(); playRingtone(ringtoneMode.startsWith('custom') ? ringtoneMode : 'custom-upload'); };
+                el.onclick = () => {
+                    ringtoneMode = ringtoneMode.startsWith('custom') ? ringtoneMode : 'custom-upload';
+                    localStorage.setItem('neoChatRingtoneMode', ringtoneMode);
+                    renderToneList();
+                    showToast('Nada dering: Audio custom', '🔔');
+                };
+                toneList.appendChild(el);
+            }
+        }
+
+        function handleRingtoneFile(file) {
+            if (!file) return;
+            if (!file.type.startsWith('audio/')) {
+                showToast('File harus berupa audio (mp3/ogg/wav)', '❌');
+                return;
+            }
+            if (file.size > MAX_RINGTONE_BYTES) {
+                showToast(`File audio maksimal ${(MAX_RINGTONE_BYTES/1024).toFixed(0)}KB agar tersimpan di browser`, '⚠️');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+                customRingtoneSrc = reader.result;
+                try {
+                    localStorage.setItem('neoChatRingtoneCustom', customRingtoneSrc);
+                } catch (e) {
+                    showToast('Gagal menyimpan audio (terlalu besar untuk penyimpanan lokal)', '❌');
+                    return;
+                }
+                ringtoneMode = 'custom-upload';
+                localStorage.setItem('neoChatRingtoneMode', ringtoneMode);
+                ringtoneFileName.textContent = '✅ ' + file.name;
+                renderToneList();
+                showToast('Nada dering custom disimpan', '🎵');
+                playRingtone('custom-upload');
+            };
+            reader.onerror = () => showToast('Gagal membaca file audio', '❌');
+            reader.readAsDataURL(file);
+        }
+
+        function applyRingtoneUrl() {
+            const url = ringtoneUrlInput.value.trim();
+            if (!url) { showToast('Tempel link audio dulu', '✏️'); return; }
+            if (/tiktok\.com/i.test(url)) {
+                showToast('Link TikTok tidak bisa diputar langsung — lihat catatan di bawah', '⚠️');
+                return;
+            }
+            try {
+                const testAudio = new Audio(url);
+                testAudio.addEventListener('canplaythrough', () => {
+                    customRingtoneSrc = url;
+                    localStorage.setItem('neoChatRingtoneCustom', url);
+                    ringtoneMode = 'custom-url';
+                    localStorage.setItem('neoChatRingtoneMode', ringtoneMode);
+                    renderToneList();
+                    showToast('Link audio dipakai sebagai nada dering', '🎵');
+                }, { once: true });
+                testAudio.addEventListener('error', () => {
+                    showToast('Link tidak bisa diakses/diputar (cek URL langsung ke file audio)', '❌');
+                }, { once: true });
+            } catch (e) {
+                showToast('Link audio tidak valid', '❌');
+            }
+        }
+
+        function onNewMessage(msg) {
+            // Only notify for messages from others
+            if (msg.senderId === userId) return;
+            if (isFirstLoad) return;
+
+            playRingtone();
+
+            // Vibration (mobile)
+            if (navigator.vibrate) {
+                navigator.vibrate([80, 40, 80]);
+            }
+
+            const preview = msg.isSticker ? '📎 Sticker' : (msg.text || '').slice(0, 60);
+            showBrowserNotif(msg.sender || 'Pesan baru', preview);
+        }
+
+        function updateFbStatusUI(mode) {
+            // mode: 'ready' | 'not-ready' | 'local' | 'error' | 'connecting'
+            if (!fbStatusBadge) return;
+            fbStatusBadge.className = 'fb-status-badge';
+            if (mode === 'ready') {
+                fbStatusBadge.classList.add('ready');
+                fbStatusBadge.textContent = 'FB READY';
+                fbStatusBadge.title = 'Firebase Realtime Database terhubung';
+            } else if (mode === 'local') {
+                fbStatusBadge.classList.add('local-mode');
+                fbStatusBadge.textContent = 'LOKAL';
+                fbStatusBadge.title = 'Mode lokal — pesan hanya di browser ini. Setup Firebase untuk realtime.';
+            } else if (mode === 'error') {
+                fbStatusBadge.classList.add('not-ready');
+                fbStatusBadge.textContent = 'FB ERROR';
+                fbStatusBadge.title = 'Gagal konek Firebase — cek config & rules';
+            } else if (mode === 'connecting') {
+                fbStatusBadge.classList.add('not-ready');
+                fbStatusBadge.textContent = 'FB...';
+                fbStatusBadge.title = 'Menghubungkan ke Firebase...';
+            } else {
+                fbStatusBadge.classList.add('not-ready');
+                fbStatusBadge.textContent = 'FB?';
+                fbStatusBadge.title = 'Firebase belum di-setup. Buka menu → Cara Setup Firebase';
+            }
+        }
+
+        function enterLocalMode(reasonToast) {
+            usingLocalMode = true;
+            firebaseReady = false;
+            messagesRef = null;
+            presenceRef = null;
+            updateFbStatusUI('local');
+            connStatus.textContent = '● Mode Lokal (Firebase belum siap)';
+            connStatus.className = 'conn-status local show';
+            if (reasonToast) showToast(reasonToast, '💾');
+            loadLocalMessages();
+            renderMessages();
+            // Keep status visible a bit longer so user sees it
+            setTimeout(() => {
+                if (usingLocalMode) connStatus.classList.remove('show');
+            }, 4500);
+        }
+
+        function startFirebase() {
+            // Reset state
+            firebaseReady = false;
+            usingLocalMode = false;
+            messagesRef = null;
+            presenceRef = null;
+
+            if (!isFirebaseConfigured()) {
+                updateFbStatusUI('not-ready');
+                enterLocalMode('Firebase belum di-setup → Mode Lokal aktif. Menu ⋮ → Cara Setup Firebase');
+                return;
+            }
+
+            updateFbStatusUI('connecting');
+            connStatus.textContent = 'Menghubungkan ke Firebase...';
+            connStatus.className = 'conn-status show';
+
+            try {
+                // Avoid double init
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                db = firebase.database();
+                messagesRef = db.ref('neochat/messages');
+                presenceRef = db.ref('neochat/presence');
+
+                db.ref('.info/connected').on('value', (snap) => {
+                    if (snap.val() === true) {
+                        firebaseReady = true;
+                        usingLocalMode = false;
+                        updateFbStatusUI('ready');
+                        connStatus.textContent = '● Terhubung (Realtime)';
+                        connStatus.className = 'conn-status ok show';
+                        setTimeout(() => connStatus.classList.remove('show'), 2800);
+
+                        const myPresence = presenceRef.child(userId);
+                        myPresence.set({
+                            name: userName,
+                            lastSeen: firebase.database.ServerValue.TIMESTAMP
+                        });
+                        myPresence.onDisconnect().remove();
+                    } else {
+                        firebaseReady = false;
+                        updateFbStatusUI('error');
+                        connStatus.textContent = '● Terputus dari Firebase';
+                        connStatus.className = 'conn-status show';
+                    }
+                });
+
+                messagesRef.limitToLast(100).on('value', (snapshot) => {
+                    const data = snapshot.val() || {};
+                    const newMessages = Object.keys(data).map(key => ({
+                        id: key,
+                        ...data[key]
+                    })).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+                    if (!isFirstLoad && newMessages.length > lastMsgCount) {
+                        const latest = newMessages[newMessages.length - 1];
+                        onNewMessage(latest);
+                    }
+
+                    messages = newMessages;
+                    lastMsgCount = messages.length;
+                    isFirstLoad = false;
+                    renderMessages();
+                    scrollToBottom();
+                }, (err) => {
+                    console.error('Messages listener error:', err);
+                    showToast('Error baca pesan Firebase. Cek Rules database.', '❌');
+                    enterLocalMode('Gagal baca data → fallback Mode Lokal');
+                });
+
+                presenceRef.on('value', (snap) => {
+                    onlineUsers = snap.val() || {};
+                    const count = Object.keys(onlineUsers).length || 1;
+                    onlineCountEl.textContent = count + ' online';
+                });
+
+                showToast('Mencoba terhubung ke Firebase...', '⚡');
+            } catch (err) {
+                console.error(err);
+                updateFbStatusUI('error');
+                connStatus.textContent = 'Error Firebase — cek config';
+                connStatus.className = 'conn-status show';
+                showToast('Gagal init Firebase. Cek config & console.', '❌');
+                enterLocalMode(null);
+            }
+        }
+
+        function loadLocalMessages() {
+            messages = JSON.parse(localStorage.getItem('neoChatLocalMsgs') || '[]');
+            lastMsgCount = messages.length;
+            isFirstLoad = false;
+        }
+
+        function saveLocalMessages() {
+            localStorage.setItem('neoChatLocalMsgs', JSON.stringify(messages.slice(-80)));
+        }
+
+        function filterBadWords(text) {
+            let filtered = text;
+            BAD_WORDS.forEach(word => {
+                const regex = new RegExp('\\b' + word + '\\b', 'gi');
+                filtered = filtered.replace(regex, '•'.repeat(word.length));
+            });
+            return filtered;
+        }
+
+        function renderEmojiTabs() {
+            emojiTabs.innerHTML = '';
+            Object.keys(EMOJI_CATEGORIES).forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = 'emoji-tab' + (cat === activeEmojiCat ? ' active' : '');
+                btn.type = 'button';
+                btn.textContent = cat;
+                btn.title = EMOJI_CATEGORY_LABELS[cat] || '';
+                btn.onclick = () => { activeEmojiCat = cat; renderEmojiTabs(); renderEmojiGrid(); };
+                emojiTabs.appendChild(btn);
+            });
+        }
+
+        function renderEmojiGrid() {
+            emojiGrid.innerHTML = '';
+            const list = EMOJI_CATEGORIES[activeEmojiCat] || [];
+            list.forEach(emoji => {
+                const btn = document.createElement('button');
+                btn.className = 'emoji-btn';
+                btn.textContent = emoji;
+                btn.type = 'button';
+                btn.onclick = () => sendSticker(emoji);
+                emojiGrid.appendChild(btn);
+            });
+        }
+
+        function getTime(ts) {
+            const d = ts ? new Date(ts) : new Date();
+            return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function getInitials(name) {
+            if (!name) return '?';
+            return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        }
+
+        function showToast(msg, icon = '✨') {
+            toastEl.innerHTML = `<span>${icon}</span> ${msg}`;
+            toastEl.classList.add('show');
+            setTimeout(() => toastEl.classList.remove('show'), 2800);
+        }
+
+        function pushMessage(msg) {
+            if (waMode) {
+                sendToWhatsApp(msg);
+                return;
+            }
+            // Prioritas: Firebase jika ready, fallback lokal selalu berhasil
+            if (messagesRef && firebaseReady) {
+                try {
+                    messagesRef.push(msg).catch(err => {
+                        console.warn('Push Firebase gagal, fallback lokal', err);
+                        // Fallback lokal agar pesan tidak hilang
+                        msg.id = 'local_' + Date.now();
+                        messages.push(msg);
+                        saveLocalMessages();
+                        renderMessages();
+                        scrollToBottom();
+                        showToast('Gagal kirim ke server, disimpan lokal', '⚠️');
+                    });
+                    // Optimistic UI: tidak perlu, listener akan update. Tapi untuk rasa responsif:
+                    // biarkan listener yang render.
+                    return;
+                } catch (e) {
+                    console.warn(e);
+                }
+            }
+
+            // Mode lokal / fallback
+            msg.id = msg.id || ('local_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
+            messages.push(msg);
+            saveLocalMessages();
+            lastMsgCount = messages.length;
+            renderMessages();
+            scrollToBottom();
+        }
+
+        function toggleAttachMenu() {
+            attachMenu.classList.toggle('show');
+        }
+        function closeAttachMenu() { attachMenu.classList.remove('show'); }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function fileIconFor(name) {
+            const ext = (name.split('.').pop() || '').toLowerCase();
+            if (['pdf'].includes(ext)) return '📕';
+            if (['doc', 'docx'].includes(ext)) return '📘';
+            if (['xls', 'xlsx'].includes(ext)) return '📗';
+            if (['ppt', 'pptx'].includes(ext)) return '📙';
+            if (['zip', 'rar', '7z'].includes(ext)) return '🗜️';
+            return '📄';
+        }
+
+        // Kirim foto/video/dokumen — dibungkus try/catch penuh + validasi ukuran agar tidak error
+        function handleAttachmentFile(file, kindHint) {
+            if (!file) return;
+            if (!userName) { showNameModal(); showToast('Isi nama dulu sebelum kirim file', '👤'); return; }
+            try {
+                if (file.size > MAX_ATTACH_BYTES) {
+                    showToast(`File terlalu besar (maks ${formatFileSize(MAX_ATTACH_BYTES)}). Pilih file lebih kecil.`, '⚠️');
+                    return;
+                }
+                const isImage = file.type.startsWith('image/');
+                const isVideo = file.type.startsWith('video/');
+                const type = isImage ? 'image' : (isVideo ? 'video' : 'file');
+
+                showToast('Mengunggah file...', '⏳');
+                const reader = new FileReader();
+                reader.onload = () => {
+                    try {
+                        const dataUrl = reader.result;
+                        ensureAudio();
+                        const msg = {
+                            text: '',
+                            sender: userName,
+                            senderId: userId,
+                            time: getTime(),
+                            timestamp: Date.now(),
+                            isSticker: false,
+                            type: type,
+                            fileName: file.name,
+                            fileSize: file.size,
+                            fileData: dataUrl
+                        };
+                        pushMessage(msg);
+                        showToast('File terkirim', '✅');
+                    } catch (err) {
+                        console.error('Gagal membuat pesan file', err);
+                        showToast('Gagal mengirim file. Coba file lain / lebih kecil.', '❌');
+                    }
+                };
+                reader.onerror = () => {
+                    console.error('FileReader error');
+                    showToast('Gagal membaca file, coba lagi.', '❌');
+                };
+                reader.readAsDataURL(file);
+            } catch (err) {
+                console.error('handleAttachmentFile error', err);
+                showToast('Terjadi kesalahan saat mengirim file.', '❌');
+            }
+        }
+
+        // ===== Voice note (tahan tombol mic untuk rekam, seperti WhatsApp) =====
+        async function startRecording() {
+            if (!userName) { showNameModal(); showToast('Isi nama dulu sebelum kirim suara', '👤'); return; }
+            if (isRecording) return;
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                recordedChunks = [];
+                const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+                mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
+                mediaRecorder.onstop = () => {
+                    stream.getTracks().forEach(t => t.stop());
+                    finishRecording();
+                };
+                mediaRecorder.start();
+                isRecording = true;
+                recordStartTs = Date.now();
+                micBtn.classList.add('recording');
+                recordingBar.classList.add('show');
+                recTimerInterval = setInterval(() => {
+                    const s = Math.floor((Date.now() - recordStartTs) / 1000);
+                    recTimerEl.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+                }, 250);
+            } catch (err) {
+                console.error('Mic error', err);
+                showToast('Tidak bisa akses mikrofon. Izinkan akses mic di browser.', '🎤');
+            }
+        }
+
+        function stopRecording() {
+            if (!isRecording || !mediaRecorder) return;
+            isRecording = false;
+            micBtn.classList.remove('recording');
+            recordingBar.classList.remove('show');
+            clearInterval(recTimerInterval);
+            try {
+                if (mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+            } catch (e) { console.warn(e); }
+        }
+
+        function finishRecording() {
+            const duration = Date.now() - recordStartTs;
+            if (duration < 500 || recordedChunks.length === 0) {
+                showToast('Rekaman terlalu pendek, tahan mic lebih lama', '🎤');
+                return;
+            }
+            try {
+                const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                if (blob.size > MAX_ATTACH_BYTES) {
+                    showToast('Rekaman terlalu panjang, coba lebih singkat', '⚠️');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const msg = {
+                        text: '',
+                        sender: userName,
+                        senderId: userId,
+                        time: getTime(),
+                        timestamp: Date.now(),
+                        isSticker: false,
+                        type: 'audio',
+                        fileName: 'Pesan Suara',
+                        fileSize: blob.size,
+                        fileData: reader.result
+                    };
+                    pushMessage(msg);
+                    showToast('Pesan suara terkirim', '🎤');
+                };
+                reader.onerror = () => showToast('Gagal memproses rekaman', '❌');
+                reader.readAsDataURL(blob);
+            } catch (err) {
+                console.error('finishRecording error', err);
+                showToast('Gagal mengirim pesan suara', '❌');
+            }
+        }
+
+        // ===== Hapus pesan sendiri (seperti WhatsApp) =====
+        let ctxTargetMsg = null;
+        let longPressTimer = null;
+
+        function openMsgCtxMenu(x, y, msg, isMe) {
+            ctxTargetMsg = msg;
+            msgCtxMenu.innerHTML = '';
+            if (isMe) {
+                const delMe = document.createElement('button');
+                delMe.className = 'msg-ctx-item';
+                delMe.innerHTML = '<span>🗑️</span> Hapus untuk saya';
+                delMe.onclick = () => { deleteMessage(msg, false); closeMsgCtxMenu(); };
+                msgCtxMenu.appendChild(delMe);
+
+                const delAll = document.createElement('button');
+                delAll.className = 'msg-ctx-item danger';
+                delAll.innerHTML = '<span>🗑️</span> Hapus untuk semua orang';
+                delAll.onclick = () => { deleteMessage(msg, true); closeMsgCtxMenu(); };
+                msgCtxMenu.appendChild(delAll);
+            } else {
+                const delMe = document.createElement('button');
+                delMe.className = 'msg-ctx-item';
+                delMe.innerHTML = '<span>🗑️</span> Hapus untuk saya';
+                delMe.onclick = () => { deleteMessage(msg, false); closeMsgCtxMenu(); };
+                msgCtxMenu.appendChild(delMe);
+            }
+            const vw = window.innerWidth, vh = window.innerHeight;
+            msgCtxMenu.style.display = 'block';
+            const rect = msgCtxMenu.getBoundingClientRect();
+            let left = Math.min(x, vw - rect.width - 12);
+            let top = Math.min(y, vh - rect.height - 12);
+            msgCtxMenu.style.left = Math.max(8, left) + 'px';
+            msgCtxMenu.style.top = Math.max(8, top) + 'px';
+            msgCtxMenu.classList.add('show');
+        }
+        function closeMsgCtxMenu() {
+            msgCtxMenu.classList.remove('show');
+            ctxTargetMsg = null;
+        }
+
+        function deleteMessage(msg, forEveryone) {
+            try {
+                if (forEveryone && messagesRef && firebaseReady && msg.id && !String(msg.id).startsWith('local_')) {
+                    messagesRef.child(msg.id).update({ deleted: true, text: '', fileData: null, isSticker: false }).catch(err => {
+                        console.error('Gagal hapus di server', err);
+                        showToast('Gagal hapus untuk semua, coba lagi', '❌');
+                    });
+                } else if (forEveryone) {
+                    messages = messages.map(m => m.id === msg.id ? { ...m, deleted: true, text: '', fileData: null, isSticker: false } : m);
+                    saveLocalMessages();
+                    renderMessages();
+                } else {
+                    messages = messages.filter(m => m.id !== msg.id);
+                    saveLocalMessages();
+                    renderMessages();
+                }
+                showToast(forEveryone ? 'Pesan dihapus untuk semua' : 'Pesan dihapus', '🗑️');
+            } catch (err) {
+                console.error('deleteMessage error', err);
+                showToast('Gagal menghapus pesan', '❌');
+            }
+        }
+
+        function attachLongPress(el, msg, isMe) {
+            let pressTimer = null;
+            let startX = 0, startY = 0;
+            const start = (e) => {
+                const point = e.touches ? e.touches[0] : e;
+                startX = point.clientX; startY = point.clientY;
+                pressTimer = setTimeout(() => {
+                    openMsgCtxMenu(startX, startY, msg, isMe);
+                    if (navigator.vibrate) navigator.vibrate(30);
+                }, 480);
+            };
+            const cancel = () => { clearTimeout(pressTimer); };
+            el.addEventListener('touchstart', start, { passive: true });
+            el.addEventListener('touchend', cancel);
+            el.addEventListener('touchmove', cancel);
+            el.addEventListener('mousedown', start);
+            el.addEventListener('mouseup', cancel);
+            el.addEventListener('mouseleave', cancel);
+            el.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                openMsgCtxMenu(e.clientX, e.clientY, msg, isMe);
+            });
+        }
+
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text) {
+                showToast('Ketik pesan dulu', '✏️');
+                return;
+            }
+            if (!userName) {
+                showNameModal();
+                showToast('Isi nama dulu sebelum chat', '👤');
+                return;
+            }
+
+            ensureAudio(); // unlock audio on user gesture
+
+            const filtered = filterBadWords(text);
+            const msg = {
+                text: filtered,
+                sender: userName,
+                senderId: userId,
+                time: getTime(),
+                timestamp: Date.now(),
+                isSticker: false
+            };
+
+            pushMessage(msg);
+
+            messageInput.value = '';
+            updateSendButton();
+            emojiPicker.classList.remove('show');
+            messageInput.focus();
+        }
+
+        function sendSticker(emoji) {
+            if (!userName) {
+                showNameModal();
+                showToast('Isi nama dulu sebelum kirim sticker', '👤');
+                return;
+            }
+            ensureAudio();
+
+            const msg = {
+                text: emoji,
+                sender: userName,
+                senderId: userId,
+                time: getTime(),
+                timestamp: Date.now(),
+                isSticker: true
+            };
+
+            pushMessage(msg);
+            emojiPicker.classList.remove('show');
+        }
+
+        function renderMessages() {
+            if (!messages.length) {
+                chatArea.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-visual">
+                            <div class="empty-ring"></div>
+                            <div class="empty-ring"></div>
+                            <div class="empty-ring"></div>
+                            <div class="empty-icon">💬</div>
+                        </div>
+                        <div class="empty-title">Chat Realtime</div>
+                        <div class="empty-sub">Pesan muncul langsung + notifikasi & dering saat ada chat baru</div>
+                        <div class="empty-hints">
+                            <span class="hint-chip">⚡ Realtime</span>
+                            <span class="hint-chip">🔔 Notifikasi</span>
+                            <span class="hint-chip">🔊 Dering</span>
+                            <span class="hint-chip">🌙 Dark Blue</span>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            chatArea.innerHTML = '';
+            const sep = document.createElement('div');
+            sep.className = 'date-separator';
+            sep.innerHTML = '<span>Hari ini</span>';
+            chatArea.appendChild(sep);
+
+            messages.forEach((msg, idx) => {
+                const isMe = msg.senderId === userId;
+                const prev = idx > 0 ? messages[idx - 1] : null;
+                const showAvatar = !prev || prev.senderId !== msg.senderId;
+                const showName = showAvatar && !isMe;
+
+                const group = document.createElement('div');
+                group.className = `message-group ${isMe ? 'sent' : ''}`;
+
+                if (!isMe) {
+                    if (showAvatar) {
+                        const av = document.createElement('div');
+                        av.className = 'avatar';
+                        av.textContent = getInitials(msg.sender);
+                        group.appendChild(av);
+                    } else {
+                        const sp = document.createElement('div');
+                        sp.className = 'avatar-spacer';
+                        group.appendChild(sp);
+                    }
+                }
+
+                const wrap = document.createElement('div');
+                wrap.className = 'bubble-wrap';
+
+                if (showName) {
+                    const nameEl = document.createElement('div');
+                    nameEl.className = 'sender-name';
+                    nameEl.textContent = msg.sender;
+                    wrap.appendChild(nameEl);
+                }
+
+                const bubble = document.createElement('div');
+                bubble.className = `message-bubble ${isMe ? 'sent' : 'received'}`;
+
+                const metaHtml = `<div class="message-meta">
+                            <span class="message-time">${msg.time || getTime(msg.timestamp)}</span>
+                            ${isMe ? '<span class="msg-check">✓✓</span>' : ''}
+                        </div>`;
+
+                const captionHtml = (msg.text && (msg.type === 'image' || msg.type === 'video' || msg.type === 'file'))
+                    ? `<div class="message-text" style="margin-top:6px;">${escapeHtml(msg.text)}</div>`
+                    : '';
+
+                if (msg.deleted) {
+                    bubble.innerHTML = `<div class="message-deleted">🚫 Pesan ini telah dihapus</div>${metaHtml}`;
+                } else if (msg.isSticker) {
+                    bubble.innerHTML = `<span class="sticker">${msg.text}</span>`;
+                } else if (msg.type === 'image') {
+                    if (msg.fileData) {
+                        bubble.innerHTML = `<img class="msg-image" src="${msg.fileData}" alt="${escapeHtml(msg.fileName || 'foto')}" loading="lazy">${captionHtml}${metaHtml}`;
+                    } else {
+                        bubble.innerHTML = `<div class="message-text">🖼️ ${escapeHtml(msg.fileName || 'Foto')} ${msg.fileSize ? '(' + formatFileSize(msg.fileSize) + ')' : ''}<br><span style="opacity:0.7;font-size:11px;">Media besar — tidak disimpan di cache lokal</span></div>${captionHtml}${metaHtml}`;
+                    }
+                } else if (msg.type === 'video') {
+                    if (msg.fileData) {
+                        bubble.innerHTML = `<video class="msg-video" src="${msg.fileData}" controls playsinline preload="metadata"></video>${captionHtml}${metaHtml}`;
+                    } else {
+                        bubble.innerHTML = `<div class="message-text">🎬 ${escapeHtml(msg.fileName || 'Video')} ${msg.fileSize ? '(' + formatFileSize(msg.fileSize) + ')' : ''}<br><span style="opacity:0.7;font-size:11px;">Media besar — tidak disimpan di cache lokal</span></div>${captionHtml}${metaHtml}`;
+                    }
+                } else if (msg.type === 'audio') {
+                    const icon = msg.isPtt ? '🎤' : '🎵';
+                    if (msg.fileData) {
+                        bubble.innerHTML = `<div class="msg-audio-wrap">${icon}<audio controls src="${msg.fileData}"></audio></div>${metaHtml}`;
+                    } else {
+                        bubble.innerHTML = `<div class="message-text">${icon} Pesan suara ${msg.fileSize ? '(' + formatFileSize(msg.fileSize) + ')' : ''}</div>${metaHtml}`;
+                    }
+                } else if (msg.type === 'file') {
+                    if (msg.fileData) {
+                        bubble.innerHTML = `<a class="msg-file-card" href="${msg.fileData}" download="${escapeHtml(msg.fileName || 'file')}">
+                            <span class="msg-file-icon">${fileIconFor(msg.fileName || '')}</span>
+                            <span class="msg-file-info">
+                                <div class="msg-file-name">${escapeHtml(msg.fileName || 'Dokumen')}</div>
+                                <div class="msg-file-size">${msg.fileSize ? formatFileSize(msg.fileSize) : ''}</div>
+                            </span>
+                        </a>${captionHtml}${metaHtml}`;
+                    } else {
+                        bubble.innerHTML = `<div class="message-text">📎 ${escapeHtml(msg.fileName || 'Dokumen')} ${msg.fileSize ? '(' + formatFileSize(msg.fileSize) + ')' : ''}</div>${captionHtml}${metaHtml}`;
+                    }
+                } else {
+                    bubble.innerHTML = `
+                        <div class="message-text">${escapeHtml(msg.text)}</div>
+                        ${metaHtml}`;
+                }
+                wrap.appendChild(bubble);
+                group.appendChild(wrap);
+                chatArea.appendChild(group);
+
+                if (!msg.deleted) attachLongPress(bubble, msg, isMe);
+            });
+        }
+
+        function escapeHtml(t) {
+            const d = document.createElement('div');
+            d.textContent = t;
+            return d.innerHTML;
+        }
+
+        function scrollToBottom() {
+            setTimeout(() => { chatArea.scrollTop = chatArea.scrollHeight; }, 40);
+        }
+
+        function updateHeaderInfo() {
+            headerTitle.textContent = userName || 'NeoChat';
+            avatarInitial.textContent = getInitials(userName);
+        }
+
+        function showNameModal() {
+            nameModal.classList.add('show');
+            setTimeout(() => nameInput.focus(), 180);
+        }
+        function hideNameModal() { nameModal.classList.remove('show'); }
+
+        function showSetupModal() {
+            const box = document.getElementById('fbConfigStatusBox');
+            if (box) {
+                if (firebaseReady) {
+                    box.innerHTML = '<div class="success-note">✅ Firebase sudah terhubung (Realtime aktif).</div>';
+                } else if (isFirebaseConfigured()) {
+                    box.innerHTML = '<div class="note">⚠️ Config sudah diisi, tapi belum berhasil terhubung. Cek databaseURL, Rules, dan koneksi internet.</div>';
+                } else {
+                    box.innerHTML = '<div class="note">❌ Firebase belum di-setup. Ikuti langkah di bawah, lalu tempel config ke file chat.html.</div>';
+                }
+            }
+            setupModal.classList.add('show');
+        }
+        function hideSetupModal() { setupModal.classList.remove('show'); }
+
+        function setName() {
+            const name = nameInput.value.trim();
+            if (!name) return;
+            userName = name;
+            localStorage.setItem('neoChatName', userName);
+            updateHeaderInfo();
+            hideNameModal();
+            nameInput.value = '';
+            confirmBtn.disabled = true;
+            updateSendButton();
+            showToast(`Halo, ${userName}!`, '👋');
+            startFirebase();
+            requestNotifPermission();
+            ensureAudio();
+            // Fokus ke input pesan agar langsung bisa ketik
+            setTimeout(() => messageInput.focus(), 200);
+        }
+
+        function toggleMenu() { menuDropdown.classList.toggle('show'); }
+        function closeMenu() { menuDropdown.classList.remove('show'); }
+
+        function updateSendButton() {
+            sendBtn.disabled = !messageInput.value.trim() || !userName;
+        }
+
+        function attachEventListeners() {
+            messageInput.addEventListener('input', updateSendButton);
+            messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+            sendBtn.addEventListener('click', sendMessage);
+
+            // Unlock audio on first interaction
+            document.body.addEventListener('click', ensureAudio, { once: true });
+            document.body.addEventListener('touchstart', ensureAudio, { once: true });
+
+            emojiBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                emojiPicker.classList.toggle('show');
+            });
+            emojiClose.addEventListener('click', () => emojiPicker.classList.remove('show'));
+
+            // Lampirkan foto/video/dokumen
+            attachBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleAttachMenu(); });
+            document.getElementById('attachPhotoVideo').addEventListener('click', () => { closeAttachMenu(); fileInputMedia.click(); });
+            document.getElementById('attachDocument').addEventListener('click', () => { closeAttachMenu(); fileInputDoc.click(); });
+            fileInputMedia.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                handleAttachmentFile(file);
+                e.target.value = '';
+            });
+            fileInputDoc.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                handleAttachmentFile(file);
+                e.target.value = '';
+            });
+
+            // Voice note: tahan tombol mic untuk rekam (seperti WhatsApp)
+            micBtn.addEventListener('mousedown', (e) => { e.preventDefault(); startRecording(); });
+            micBtn.addEventListener('touchstart', (e) => { startRecording(); }, { passive: true });
+            micBtn.addEventListener('mouseup', stopRecording);
+            micBtn.addEventListener('mouseleave', () => { if (isRecording) stopRecording(); });
+            micBtn.addEventListener('touchend', stopRecording);
+            micBtn.addEventListener('touchcancel', stopRecording);
+
+            document.getElementById('callBtn').addEventListener('click', () => showToast('Panggilan suara segera hadir', '📞'));
+            document.getElementById('videoBtn').addEventListener('click', () => showToast('Panggilan video segera hadir', '📹'));
+
+            notifBtn.addEventListener('click', () => {
+                if (notifPermission !== 'granted') {
+                    requestNotifPermission();
+                } else {
+                    toggleNotif();
+                }
+            });
+
+            nameInput.addEventListener('input', () => { confirmBtn.disabled = !nameInput.value.trim(); });
+            nameInput.addEventListener('keypress', e => { if (e.key === 'Enter' && nameInput.value.trim()) setName(); });
+            confirmBtn.addEventListener('click', setName);
+
+            menuBtn.addEventListener('click', e => { e.stopPropagation(); toggleMenu(); });
+            document.getElementById('changeName').addEventListener('click', () => {
+                nameInput.value = userName;
+                showNameModal();
+                closeMenu();
+            });
+            document.getElementById('viewProfile').addEventListener('click', () => {
+                closeMenu();
+                showToast(`Profil: ${userName} · ID: ${userId.slice(0, 10)}...`, '👤');
+            });
+            document.getElementById('toggleNotif').addEventListener('click', toggleNotif);
+            document.getElementById('toggleSound').addEventListener('click', toggleSound);
+
+            document.getElementById('setupFirebase').addEventListener('click', () => {
+                closeMenu();
+                showSetupModal();
+            });
+            document.getElementById('clearLocal').addEventListener('click', () => {
+                closeMenu();
+                if (confirm('Bersihkan cache lokal? (pesan di server tetap ada)')) {
+                    localStorage.removeItem('neoChatLocalMsgs');
+                    messages = [];
+                    lastMsgCount = 0;
+                    renderMessages();
+                    showToast('Cache lokal dibersihkan', '🧹');
+                }
+            });
+            document.getElementById('about').addEventListener('click', () => {
+                closeMenu();
+                const mode = firebaseReady ? 'Realtime (Firebase)' : (usingLocalMode ? 'Lokal' : 'Belum siap');
+                showToast(`NeoChat · Mode: ${mode} · Notif & Dering aktif`, '🚀');
+            });
+            if (closeSetupBtn) {
+                closeSetupBtn.addEventListener('click', hideSetupModal);
+            }
+            if (setupModal) {
+                setupModal.addEventListener('click', e => {
+                    if (e.target === setupModal) hideSetupModal();
+                });
+            }
+
+            document.getElementById('openWaModalBtn').addEventListener('click', () => {
+                closeMenu();
+                const tabs = document.getElementById('waMethodTabs');
+                if (waConnStatus === 'connected') {
+                    if (waQrImg) waQrImg.style.display = 'none';
+                    if (waStatusIcon) {
+                        waStatusIcon.style.display = 'block';
+                        waStatusIcon.textContent = '✅';
+                    }
+                    if (waModalSubtitle) waModalSubtitle.textContent = 'WhatsApp terhubung!';
+                    if (tabs) tabs.style.display = 'none';
+                    document.getElementById('waPanelQr') && (document.getElementById('waPanelQr').style.display = 'block');
+                    document.getElementById('waPanelPair') && (document.getElementById('waPanelPair').style.display = 'none');
+                } else if (!socket) {
+                    if (waQrImg) waQrImg.style.display = 'none';
+                    if (waStatusIcon) {
+                        waStatusIcon.style.display = 'block';
+                        waStatusIcon.textContent = '⚠️';
+                    }
+                    if (waModalSubtitle) waModalSubtitle.textContent = 'Server backend belum terdeteksi';
+                    if (tabs) tabs.style.display = 'flex';
+                    switchWaTab('qr');
+                } else {
+                    if (tabs) tabs.style.display = 'flex';
+                    switchWaTab(waActiveTab || 'qr');
+                    if (waConnStatus === 'qr' && waQrImg && waQrImg.src) {
+                        waQrImg.style.display = 'block';
+                        if (waStatusIcon) waStatusIcon.style.display = 'none';
+                        if (waModalSubtitle) waModalSubtitle.textContent = 'Scan QR ini pakai WhatsApp di HP kamu';
+                    } else if (waConnStatus === 'pairing') {
+                        if (waModalSubtitle) waModalSubtitle.textContent = 'Masukkan kode pairing di HP kamu';
+                    } else {
+                        if (waModalSubtitle) waModalSubtitle.textContent = 'Pilih metode sambung (QR atau Pairing Code)';
+                        if (waStatusIcon) waStatusIcon.style.display = 'none';
+                    }
+                }
+                waModal.classList.add('show');
+            });
+            closeWaModalBtn.addEventListener('click', () => waModal.classList.remove('show'));
+            waModal.addEventListener('click', e => { if (e.target === waModal) waModal.classList.remove('show'); });
+
+            // Tab QR / Pairing
+            const waTabQrEl = document.getElementById('waTabQr');
+            const waTabPairEl = document.getElementById('waTabPair');
+            if (waTabQrEl) waTabQrEl.addEventListener('click', () => switchWaTab('qr'));
+            if (waTabPairEl) waTabPairEl.addEventListener('click', () => switchWaTab('pair'));
+            const waRequestPairBtn = document.getElementById('waRequestPairBtn');
+            if (waRequestPairBtn) waRequestPairBtn.addEventListener('click', requestPairingCode);
+            const waPairPhoneInput = document.getElementById('waPairPhoneInput');
+            if (waPairPhoneInput) {
+                waPairPhoneInput.addEventListener('keypress', e => {
+                    if (e.key === 'Enter') requestPairingCode();
+                });
+            }
+
+            document.getElementById('openWaTargetModalBtn').addEventListener('click', () => {
+                closeMenu();
+                waTargetInput.value = waTargetNumber;
+                waTargetModal.classList.add('show');
+                setTimeout(() => waTargetInput.focus(), 150);
+            });
+            saveWaTargetBtn.addEventListener('click', () => {
+                const val = waTargetInput.value.trim();
+                if (!val) { showToast('Isi nomor dulu', '✏️'); return; }
+                waTargetNumber = val;
+                localStorage.setItem('neoChatWaTarget', waTargetNumber);
+                waTargetModal.classList.remove('show');
+                showToast(`Nomor tujuan diset: ${waTargetNumber}`, '📱');
+            });
+            waTargetModal.addEventListener('click', e => { if (e.target === waTargetModal) waTargetModal.classList.remove('show'); });
+
+            document.getElementById('toggleWaMode').addEventListener('click', toggleWaMode);
+
+            document.getElementById('openThemeModal').addEventListener('click', () => {
+                closeMenu();
+                renderThemeGrid();
+                themeModal.classList.add('show');
+            });
+            closeThemeBtn.addEventListener('click', () => themeModal.classList.remove('show'));
+            themeModal.addEventListener('click', e => { if (e.target === themeModal) themeModal.classList.remove('show'); });
+
+            document.getElementById('openRingtoneModal').addEventListener('click', () => {
+                closeMenu();
+                renderToneList();
+                ringtoneModal.classList.add('show');
+            });
+            closeRingtoneBtn.addEventListener('click', () => ringtoneModal.classList.remove('show'));
+            ringtoneModal.addEventListener('click', e => { if (e.target === ringtoneModal) ringtoneModal.classList.remove('show'); });
+            uploadRingtoneBtn.addEventListener('click', () => fileInputRingtone.click());
+            fileInputRingtone.addEventListener('change', (e) => {
+                handleRingtoneFile(e.target.files[0]);
+                e.target.value = '';
+            });
+            applyRingtoneUrlBtn.addEventListener('click', applyRingtoneUrl);
+
+            document.addEventListener('click', e => {
+                if (!e.target.closest('.menu-container')) closeMenu();
+                if (!e.target.closest('#emojiBtn') && !e.target.closest('.emoji-picker')) {
+                    emojiPicker.classList.remove('show');
+                }
+                if (!e.target.closest('#attachBtn') && !e.target.closest('.attach-menu')) {
+                    closeAttachMenu();
+                }
+                if (!e.target.closest('.msg-ctx-menu')) {
+                    closeMsgCtxMenu();
+                }
+            });
+
+            nameModal.addEventListener('click', e => {
+                if (e.target === nameModal && userName) hideNameModal();
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
