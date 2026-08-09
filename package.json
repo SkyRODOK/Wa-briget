@@ -1,0 +1,21 @@
+{
+  "name": "neochat-whatsapp",
+  "version": "2.0.0",
+  "description": "NeoChat v2 — Realtime chat + WhatsApp Bridge (QR, Pairing Code, multi-target, media)",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.9",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pino": "^9.2.0",
+    "qrcode": "^1.5.3",
+    "socket.io": "^4.7.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
