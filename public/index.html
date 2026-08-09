@@ -3,26 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-    <title>NeoChat Realtime — Blue Black</title>
+    <title>NeoChat v2 — Realtime + WhatsApp</title>
+    <meta name="theme-color" content="#030712">
     <style>
         :root {
-            --bg-deep: #05050f;
-            --bg-panel: #0c0c1a;
-            --accent: #00d4ff;
-            --accent-2: #0084ff;
-            --accent-3: #0066cc;
-            --glow: 0 0 20px rgba(0, 212, 255, 0.35);
-            --glow-strong: 0 0 40px rgba(0, 212, 255, 0.5);
-            --text: #e8eaf6;
-            --text-muted: #8b8fa8;
-            --border: rgba(0, 132, 255, 0.2);
+            --bg-deep: #030712;
+            --bg-panel: #0a0f1e;
+            --accent: #22d3ee;
+            --accent-2: #3b82f6;
+            --accent-3: #6366f1;
+            --accent-wa: #25d366;
+            --glow: 0 0 24px rgba(34, 211, 238, 0.35);
+            --glow-strong: 0 0 48px rgba(59, 130, 246, 0.45);
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: rgba(56, 189, 248, 0.18);
+            --radius: 16px;
+            --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html { height: 100%; }
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: var(--font);
             background: var(--bg-deep);
             height: 100vh;
             height: calc(var(--app-height, 100vh));
@@ -30,6 +34,7 @@
             overflow: hidden;
             color: var(--text);
             position: relative;
+            -webkit-font-smoothing: antialiased;
         }
 
         body::before {
@@ -37,9 +42,9 @@
             position: fixed;
             inset: 0;
             background:
-                radial-gradient(ellipse 80% 50% at 15% 15%, rgba(0, 132, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(ellipse 60% 40% at 85% 75%, rgba(0, 212, 255, 0.07) 0%, transparent 50%),
-                radial-gradient(ellipse 50% 30% at 50% 100%, rgba(0, 100, 200, 0.05) 0%, transparent 50%);
+                radial-gradient(ellipse 90% 55% at 10% 0%, rgba(99, 102, 241, 0.14) 0%, transparent 55%),
+                radial-gradient(ellipse 70% 45% at 90% 20%, rgba(34, 211, 238, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 40% at 50% 100%, rgba(37, 211, 102, 0.06) 0%, transparent 50%);
             pointer-events: none;
             z-index: 0;
         }
@@ -330,6 +335,55 @@
             height: 1px;
             background: linear-gradient(90deg, transparent, rgba(0,132,255,0.2), transparent);
             margin: 3px 0;
+        }
+
+        /* ===== WA STATUS BAR (v2) ===== */
+        .wa-status-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: linear-gradient(180deg, rgba(10, 18, 36, 0.95), rgba(8, 14, 28, 0.9));
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            flex-shrink: 0;
+            z-index: 35;
+        }
+        .wa-status-pill, .wa-target-chip, .wa-mode-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.04);
+            color: var(--text-muted);
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .wa-status-pill { cursor: default; }
+        .wa-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #64748b;
+            box-shadow: 0 0 6px #64748b;
+        }
+        .wa-status-pill.connected .wa-dot { background: var(--accent-wa); box-shadow: 0 0 8px var(--accent-wa); }
+        .wa-status-pill.connected { color: #86efac; border-color: rgba(37,211,102,0.35); background: rgba(37,211,102,0.1); }
+        .wa-status-pill.qr, .wa-status-pill.pairing { color: #fde68a; border-color: rgba(251,191,36,0.3); }
+        .wa-status-pill.qr .wa-dot, .wa-status-pill.pairing .wa-dot { background: #fbbf24; box-shadow: 0 0 8px #fbbf24; }
+        .wa-target-chip:hover, .wa-mode-chip:hover {
+            border-color: rgba(34,211,238,0.4);
+            color: #fff;
+            background: rgba(34,211,238,0.1);
+        }
+        .wa-mode-chip.on {
+            background: rgba(37,211,102,0.15);
+            border-color: rgba(37,211,102,0.4);
+            color: #86efac;
         }
 
         /* ===== CHAT AREA ===== */
@@ -1244,6 +1298,18 @@
             </div>
         </div>
 
+        <!-- NeoChat v2: strip status WA -->
+        <div class="wa-status-bar" id="waStatusBar">
+            <div class="wa-status-pill" id="waStatusPill">
+                <span class="wa-dot" id="waStatusDot"></span>
+                <span id="waStatusLabel">WA: offline</span>
+            </div>
+            <button type="button" class="wa-target-chip" id="waTargetChip" title="Ganti nomor tujuan">
+                📱 <span id="waTargetChipText">Pilih nomor</span>
+            </button>
+            <button type="button" class="wa-mode-chip" id="waModeChip" title="Toggle mode WA">Mode OFF</button>
+        </div>
+
         <div class="chat-area" id="chatArea">
             <div class="empty-state">
                 <div class="empty-visual">
@@ -1252,10 +1318,11 @@
                     <div class="empty-ring"></div>
                     <div class="empty-icon">💬</div>
                 </div>
-                <div class="empty-title">Chat Realtime</div>
-                <div class="empty-sub">Pesan muncul langsung + notifikasi & dering saat ada chat baru</div>
+                <div class="empty-title">NeoChat v2</div>
+                <div class="empty-sub">Realtime chat + WhatsApp asli. Pairing code, multi nomor, media andal.</div>
                 <div class="empty-hints">
                     <span class="hint-chip">⚡ Realtime</span>
+                    <span class="hint-chip">🟢 WhatsApp</span>
                     <span class="hint-chip">🔔 Notifikasi</span>
                     <span class="hint-chip">🔊 Dering</span>
                     <span class="hint-chip">🌙 Dark Blue</span>
@@ -1426,15 +1493,16 @@
 
             <!-- Panel Pairing Code -->
             <div id="waPanelPair" style="display:none;">
-                <div class="note" style="margin-bottom:10px;">Masukkan nomor WhatsApp <b>kamu sendiri</b> (yang mau di-link), lalu minta kode. Di HP pilih <b>Tautkan dengan nomor telepon</b>.</div>
+                <div class="note" style="margin-bottom:10px;">Masukkan nomor WhatsApp <b>kamu sendiri</b> (yang mau di-link). Setelah kode muncul, di HP: <b>Perangkat Tertaut → Tautkan perangkat → Tautkan dengan nomor telepon</b>.</div>
                 <input type="text" class="modal-input" id="waPairPhoneInput" placeholder="Contoh: 628123456789" inputmode="numeric" autocomplete="tel" style="margin-bottom:10px;">
-                <button class="modal-btn" id="waRequestPairBtn" type="button" style="margin-bottom:12px;">Minta Kode Pairing</button>
+                <button class="modal-btn" id="waRequestPairBtn" type="button" style="margin-bottom:8px;">Minta Kode Pairing</button>
+                <button class="modal-btn" id="waRefreshPairBtn" type="button" style="margin-bottom:12px;background:rgba(255,255,255,0.06);border:1px solid var(--border);">Minta Kode Baru</button>
                 <div id="waPairCodeBox" style="display:none;text-align:center;padding:16px 10px;background:rgba(0,212,255,0.08);border:1px dashed rgba(0,212,255,0.35);border-radius:14px;margin-bottom:10px;">
                     <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;font-weight:600;letter-spacing:0.5px;">KODE PAIRING</div>
                     <div id="waPairCodeText" style="font-size:28px;font-weight:800;letter-spacing:4px;color:#00d4ff;font-family:monospace;"></div>
-                    <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">Masukkan kode ini di HP kamu</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">Ketik di WhatsApp sekarang (boleh dengan atau tanpa tanda -)</div>
                 </div>
-                <div class="note" id="waPairNote">Format nomor: kode negara + nomor tanpa 0 di depan (contoh Indonesia: 62812...).</div>
+                <div class="note" id="waPairNote">Format: <b>62812...</b> (kode negara + nomor). Jangan pakai + atau spasi. Nomor harus sama dengan akun WhatsApp di HP ini. Kode cepat kadaluarsa — kalau ditolak, klik <b>Minta Kode Baru</b>.</div>
             </div>
 
             <button class="modal-btn" id="closeWaModalBtn" style="margin-top:14px;background:rgba(255,255,255,0.06);border:1px solid var(--border);">Tutup</button>
@@ -1442,12 +1510,25 @@
     </div>
 
     <div class="modal" id="waTargetModal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width:380px;">
             <div class="modal-icon-wrap">📱</div>
-            <div class="modal-title">Nomor WhatsApp Tujuan</div>
-            <div class="modal-subtitle">Pesan dari web ini dikirim ke nomor ini</div>
-            <input type="text" class="modal-input" id="waTargetInput" placeholder="Contoh: 628123456789" autocomplete="off">
-            <button class="modal-btn" id="saveWaTargetBtn">Simpan</button>
+            <div class="modal-title">Nomor Tujuan WA</div>
+            <div class="modal-subtitle">Tambah beberapa nomor, lalu pilih yang aktif</div>
+
+            <div id="waTargetActiveBox" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:12px;background:rgba(49,162,76,0.12);border:1px solid rgba(49,162,76,0.3);">
+                <div style="font-size:10px;color:#6ddf8a;font-weight:600;letter-spacing:0.4px;margin-bottom:2px;">NOMOR AKTIF</div>
+                <div id="waTargetActiveText" style="font-size:15px;font-weight:700;color:#fff;font-family:monospace;"></div>
+            </div>
+
+            <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.4px;">Daftar nomor</div>
+            <div id="waTargetList" style="max-height:200px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:6px;"></div>
+            <div id="waTargetEmpty" class="note" style="margin-bottom:12px;">Belum ada nomor. Tambah nomor di bawah.</div>
+
+            <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;">Tambah nomor</div>
+            <input type="text" class="modal-input" id="waTargetInput" placeholder="Contoh: 628123456789" inputmode="numeric" autocomplete="tel" style="margin-bottom:6px;">
+            <input type="text" class="modal-input" id="waTargetLabelInput" placeholder="Label (opsional) mis. Mama, Bos" autocomplete="off" style="margin-bottom:10px;">
+            <button class="modal-btn" id="saveWaTargetBtn" type="button">➕ Tambah Nomor</button>
+            <button class="modal-btn" id="closeWaTargetBtn" type="button" style="margin-top:8px;background:rgba(255,255,255,0.06);border:1px solid var(--border);">Tutup</button>
         </div>
     </div>
 
@@ -1614,10 +1695,155 @@ const firebaseConfig = {
 
         // ===== WhatsApp Bridge (Baileys backend) =====
         let waMode = localStorage.getItem('neoChatWaMode') === 'true';
-        let waTargetNumber = localStorage.getItem('neoChatWaTarget') || '';
+        // Multi nomor tujuan: [{ id, number, label }]
+        let waTargetList = [];
+        try {
+            waTargetList = JSON.parse(localStorage.getItem('neoChatWaTargets') || '[]');
+            if (!Array.isArray(waTargetList)) waTargetList = [];
+        } catch (_) { waTargetList = []; }
+        // Migrasi nomor lama (single) ke list
+        const _legacyTarget = localStorage.getItem('neoChatWaTarget') || '';
+        if (_legacyTarget && !waTargetList.some(t => t.number === _legacyTarget)) {
+            waTargetList.push({ id: 't_' + Date.now(), number: _legacyTarget, label: '' });
+            localStorage.setItem('neoChatWaTargets', JSON.stringify(waTargetList));
+        }
+        let waTargetNumber = localStorage.getItem('neoChatWaTargetActive') || (_legacyTarget || (waTargetList[0] && waTargetList[0].number) || '');
+        if (waTargetNumber) localStorage.setItem('neoChatWaTargetActive', waTargetNumber);
+
         let waConnStatus = 'disconnected'; // disconnected | connecting | qr | pairing | connected
         let socket = null;
         let waActiveTab = 'qr'; // qr | pair
+
+        function normalizeTargetNumber(raw) {
+            let n = String(raw || '').replace(/[^0-9]/g, '');
+            if (!n) return '';
+            if (n.startsWith('0')) n = '62' + n.slice(1);
+            if (!n.startsWith('62') && n.length >= 9 && n.length <= 12) n = '62' + n;
+            return n;
+        }
+
+        function saveWaTargetList() {
+            localStorage.setItem('neoChatWaTargets', JSON.stringify(waTargetList));
+            localStorage.setItem('neoChatWaTargetActive', waTargetNumber || '');
+            // kompatibel kode lama
+            if (waTargetNumber) localStorage.setItem('neoChatWaTarget', waTargetNumber);
+        }
+
+        function renderWaTargetList() {
+            const listEl = document.getElementById('waTargetList');
+            const emptyEl = document.getElementById('waTargetEmpty');
+            const activeBox = document.getElementById('waTargetActiveBox');
+            const activeText = document.getElementById('waTargetActiveText');
+            if (!listEl) return;
+
+            listEl.innerHTML = '';
+            if (!waTargetList.length) {
+                if (emptyEl) emptyEl.style.display = 'block';
+                if (activeBox) activeBox.style.display = 'none';
+                return;
+            }
+            if (emptyEl) emptyEl.style.display = 'none';
+
+            if (activeBox && activeText) {
+                const activeItem = waTargetList.find(t => t.number === waTargetNumber);
+                if (waTargetNumber) {
+                    activeBox.style.display = 'block';
+                    activeText.textContent = activeItem && activeItem.label
+                        ? `${activeItem.label} · ${waTargetNumber}`
+                        : waTargetNumber;
+                } else {
+                    activeBox.style.display = 'none';
+                }
+            }
+
+            waTargetList.forEach((item) => {
+                const isActive = item.number === waTargetNumber;
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;border:1px solid ' +
+                    (isActive ? 'rgba(49,162,76,0.45)' : 'var(--border)') +
+                    ';background:' + (isActive ? 'rgba(49,162,76,0.1)' : 'rgba(0,132,255,0.05)') + ';';
+
+                const info = document.createElement('div');
+                info.style.cssText = 'flex:1;min-width:0;cursor:pointer;';
+                info.innerHTML =
+                    (item.label ? `<div style="font-size:12px;font-weight:600;color:#00d4ff;margin-bottom:2px;">${escapeHtml(item.label)}</div>` : '') +
+                    `<div style="font-size:13px;font-family:monospace;color:#e8eaf6;">${escapeHtml(item.number)}</div>` +
+                    (isActive ? '<div style="font-size:10px;color:#6ddf8a;margin-top:2px;font-weight:600;">✓ Dipilih</div>' : '');
+                info.onclick = () => selectWaTarget(item.number);
+
+                const selBtn = document.createElement('button');
+                selBtn.type = 'button';
+                selBtn.textContent = isActive ? 'Aktif' : 'Pilih';
+                selBtn.style.cssText = 'flex-shrink:0;padding:6px 10px;border-radius:8px;border:none;font-size:11px;font-weight:600;cursor:pointer;' +
+                    (isActive
+                        ? 'background:rgba(49,162,76,0.25);color:#6ddf8a;'
+                        : 'background:rgba(0,132,255,0.2);color:#00d4ff;');
+                selBtn.onclick = () => selectWaTarget(item.number);
+
+                const delBtn = document.createElement('button');
+                delBtn.type = 'button';
+                delBtn.textContent = '🗑️';
+                delBtn.title = 'Hapus';
+                delBtn.style.cssText = 'flex-shrink:0;width:32px;height:32px;border-radius:8px;border:1px solid rgba(255,100,100,0.25);background:rgba(255,80,80,0.1);cursor:pointer;font-size:13px;';
+                delBtn.onclick = () => removeWaTarget(item.id);
+
+                row.appendChild(info);
+                row.appendChild(selBtn);
+                row.appendChild(delBtn);
+                listEl.appendChild(row);
+            });
+        }
+
+        function selectWaTarget(number) {
+            waTargetNumber = number;
+            saveWaTargetList();
+            renderWaTargetList();
+            updateWaStatusBar();
+            showToast('Nomor aktif: ' + number, '✅');
+        }
+
+        function removeWaTarget(id) {
+            const item = waTargetList.find(t => t.id === id);
+            if (!item) return;
+            if (!confirm('Hapus nomor ' + item.number + '?')) return;
+            waTargetList = waTargetList.filter(t => t.id !== id);
+            if (waTargetNumber === item.number) {
+                waTargetNumber = waTargetList[0] ? waTargetList[0].number : '';
+            }
+            saveWaTargetList();
+            renderWaTargetList();
+            showToast('Nomor dihapus', '🗑️');
+        }
+
+        function addWaTarget() {
+            const input = document.getElementById('waTargetInput');
+            const labelInput = document.getElementById('waTargetLabelInput');
+            const raw = (input && input.value || '').trim();
+            const label = (labelInput && labelInput.value || '').trim();
+            const number = normalizeTargetNumber(raw);
+            if (!number || number.length < 10) {
+                showToast('Nomor tidak valid. Contoh: 628123456789', '✏️');
+                return;
+            }
+            if (waTargetList.some(t => t.number === number)) {
+                selectWaTarget(number);
+                showToast('Nomor sudah ada — dijadikan aktif', '📱');
+                if (input) input.value = '';
+                if (labelInput) labelInput.value = '';
+                return;
+            }
+            waTargetList.push({
+                id: 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+                number,
+                label
+            });
+            waTargetNumber = number;
+            saveWaTargetList();
+            renderWaTargetList();
+            if (input) input.value = '';
+            if (labelInput) labelInput.value = '';
+            showToast('Nomor ditambah & dipilih: ' + number, '✅');
+        }
 
         if (typeof io === 'function') {
             try {
@@ -1654,12 +1880,18 @@ const firebaseConfig = {
                         txt.textContent = code;
                         box.style.display = 'block';
                     }
-                    if (waModalSubtitle) waModalSubtitle.textContent = 'Masukkan kode pairing di HP kamu';
+                    if (waModalSubtitle) waModalSubtitle.textContent = 'Masukkan kode di WA SEKARANG (kadaluarsa cepat)';
                     if (waQrImg) waQrImg.style.display = 'none';
                     if (waStatusIcon) waStatusIcon.style.display = 'none';
+                    showToast('Kode pairing siap — segera ketik di WhatsApp', '🔑');
+                });
+                socket.on('pairing-error', (payload) => {
+                    showToast((payload && payload.error) || 'Pairing gagal', '❌');
+                    if (waModalSubtitle) waModalSubtitle.textContent = 'Pairing gagal — coba kode baru atau Scan QR';
                 });
                 socket.on('wa-status', (status) => {
                     waConnStatus = status;
+                    updateWaStatusBar();
                     if (status === 'connected') {
                         if (waQrImg) waQrImg.style.display = 'none';
                         if (waStatusIcon) {
@@ -1760,7 +1992,7 @@ const firebaseConfig = {
             }
         }
 
-        function requestPairingCode() {
+        function requestPairingCode(forceNew) {
             if (!socket) {
                 showToast('Server WhatsApp Bridge belum jalan', '⚠️');
                 return;
@@ -1768,7 +2000,7 @@ const firebaseConfig = {
             const input = document.getElementById('waPairPhoneInput');
             const phone = (input && input.value || '').trim();
             if (!phone) {
-                showToast('Isi nomor WhatsApp kamu dulu', '✏️');
+                showToast('Isi nomor WhatsApp kamu sendiri (yang mau di-link)', '✏️');
                 return;
             }
             const btn = document.getElementById('waRequestPairBtn');
@@ -1776,7 +2008,7 @@ const firebaseConfig = {
                 btn.disabled = true;
                 btn.textContent = 'Meminta kode...';
             }
-            socket.emit('request-pairing-code', { phone }, (res) => {
+            socket.emit('request-pairing-code', { phone, forceNew: !!forceNew }, (res) => {
                 if (btn) {
                     btn.disabled = false;
                     btn.textContent = 'Minta Kode Pairing';
@@ -1785,7 +2017,18 @@ const firebaseConfig = {
                     showToast((res && res.error) || 'Gagal minta pairing code', '❌');
                     return;
                 }
-                showToast(res.cached ? 'Kode pairing (dari cache)' : 'Kode pairing siap — masukkan di HP', '🔑');
+                const box = document.getElementById('waPairCodeBox');
+                const txt = document.getElementById('waPairCodeText');
+                if (box && txt && res.code) {
+                    txt.textContent = res.code;
+                    box.style.display = 'block';
+                }
+                showToast(
+                    res.cached
+                        ? 'Kode masih sama — masukkan di WhatsApp sekarang'
+                        : 'Kode siap! Segera masukkan di WhatsApp (kadaluarsa cepat)',
+                    '🔑'
+                );
             });
         }
 
@@ -1820,8 +2063,50 @@ const firebaseConfig = {
         }
 
         function updateWaModeUI() {
-            waModeStatusEl.textContent = waMode ? 'ON' : 'OFF';
-            waModeStatusEl.className = 'mi-status ' + (waMode ? 'on' : 'off');
+            if (waModeStatusEl) {
+                waModeStatusEl.textContent = waMode ? 'ON' : 'OFF';
+                waModeStatusEl.className = 'mi-status ' + (waMode ? 'on' : 'off');
+            }
+            updateWaStatusBar();
+        }
+
+        function updateWaStatusBar() {
+            const pill = document.getElementById('waStatusPill');
+            const label = document.getElementById('waStatusLabel');
+            const chipText = document.getElementById('waTargetChipText');
+            const modeChip = document.getElementById('waModeChip');
+            if (!pill || !label) return;
+
+            pill.className = 'wa-status-pill';
+            if (waConnStatus === 'connected') {
+                pill.classList.add('connected');
+                label.textContent = 'WA: terhubung';
+            } else if (waConnStatus === 'qr') {
+                pill.classList.add('qr');
+                label.textContent = 'WA: scan QR';
+            } else if (waConnStatus === 'pairing') {
+                pill.classList.add('pairing');
+                label.textContent = 'WA: pairing...';
+            } else if (waConnStatus === 'connecting') {
+                label.textContent = 'WA: menghubungkan...';
+            } else {
+                label.textContent = 'WA: offline';
+            }
+
+            if (chipText) {
+                if (waTargetNumber) {
+                    const item = waTargetList.find(t => t.number === waTargetNumber);
+                    chipText.textContent = item && item.label
+                        ? item.label
+                        : (waTargetNumber.length > 12 ? waTargetNumber.slice(0, 10) + '…' : waTargetNumber);
+                } else {
+                    chipText.textContent = 'Pilih nomor';
+                }
+            }
+            if (modeChip) {
+                modeChip.textContent = waMode ? 'Mode ON' : 'Mode OFF';
+                modeChip.className = 'wa-mode-chip' + (waMode ? ' on' : '');
+            }
         }
 
         function toggleWaMode() {
@@ -2265,13 +2550,42 @@ const firebaseConfig = {
         }
 
         function loadLocalMessages() {
-            messages = JSON.parse(localStorage.getItem('neoChatLocalMsgs') || '[]');
+            try {
+                messages = JSON.parse(localStorage.getItem('neoChatLocalMsgs') || '[]');
+                if (!Array.isArray(messages)) messages = [];
+            } catch (_) {
+                messages = [];
+            }
+            // Batasi di memori juga
+            if (messages.length > 120) messages = messages.slice(-100);
             lastMsgCount = messages.length;
             isFirstLoad = false;
         }
 
         function saveLocalMessages() {
-            localStorage.setItem('neoChatLocalMsgs', JSON.stringify(messages.slice(-80)));
+            try {
+                // Simpan max 60 pesan, buang fileData besar agar localStorage tidak penuh
+                const slim = messages.slice(-60).map(m => {
+                    if (m && m.fileData && m.fileSize && m.fileSize > 800 * 1024) {
+                        return { ...m, fileData: null, _largeMedia: true };
+                    }
+                    if (m && m.fileData && typeof m.fileData === 'string' && m.fileData.length > 1.2e6) {
+                        return { ...m, fileData: null, _largeMedia: true };
+                    }
+                    return m;
+                });
+                localStorage.setItem('neoChatLocalMsgs', JSON.stringify(slim));
+            } catch (e) {
+                // Quota penuh — potong lebih agresif
+                try {
+                    const minimal = messages.slice(-20).map(m => ({
+                        id: m.id, text: m.text || '', sender: m.sender, senderId: m.senderId,
+                        time: m.time, timestamp: m.timestamp, type: m.type, isSticker: m.isSticker,
+                        deleted: m.deleted, fileName: m.fileName
+                    }));
+                    localStorage.setItem('neoChatLocalMsgs', JSON.stringify(minimal));
+                } catch (_) { /* abaikan */ }
+            }
         }
 
         function filterBadWords(text) {
@@ -2911,7 +3225,7 @@ const firebaseConfig = {
             document.getElementById('about').addEventListener('click', () => {
                 closeMenu();
                 const mode = firebaseReady ? 'Realtime (Firebase)' : (usingLocalMode ? 'Lokal' : 'Belum siap');
-                showToast(`NeoChat · Mode: ${mode} · Notif & Dering aktif`, '🚀');
+                showToast(`NeoChat v2 · Mode: ${mode} · Notif & Dering aktif`, '🚀');
             });
             if (closeSetupBtn) {
                 closeSetupBtn.addEventListener('click', hideSetupModal);
@@ -2969,31 +3283,58 @@ const firebaseConfig = {
             if (waTabQrEl) waTabQrEl.addEventListener('click', () => switchWaTab('qr'));
             if (waTabPairEl) waTabPairEl.addEventListener('click', () => switchWaTab('pair'));
             const waRequestPairBtn = document.getElementById('waRequestPairBtn');
-            if (waRequestPairBtn) waRequestPairBtn.addEventListener('click', requestPairingCode);
+            if (waRequestPairBtn) waRequestPairBtn.addEventListener('click', () => requestPairingCode(false));
+            const waRefreshPairBtn = document.getElementById('waRefreshPairBtn');
+            if (waRefreshPairBtn) waRefreshPairBtn.addEventListener('click', () => requestPairingCode(true));
             const waPairPhoneInput = document.getElementById('waPairPhoneInput');
             if (waPairPhoneInput) {
                 waPairPhoneInput.addEventListener('keypress', e => {
-                    if (e.key === 'Enter') requestPairingCode();
+                    if (e.key === 'Enter') requestPairingCode(false);
                 });
             }
 
             document.getElementById('openWaTargetModalBtn').addEventListener('click', () => {
                 closeMenu();
-                waTargetInput.value = waTargetNumber;
+                renderWaTargetList();
+                if (waTargetInput) waTargetInput.value = '';
+                const labelIn = document.getElementById('waTargetLabelInput');
+                if (labelIn) labelIn.value = '';
                 waTargetModal.classList.add('show');
-                setTimeout(() => waTargetInput.focus(), 150);
+                setTimeout(() => waTargetInput && waTargetInput.focus(), 150);
             });
-            saveWaTargetBtn.addEventListener('click', () => {
-                const val = waTargetInput.value.trim();
-                if (!val) { showToast('Isi nomor dulu', '✏️'); return; }
-                waTargetNumber = val;
-                localStorage.setItem('neoChatWaTarget', waTargetNumber);
-                waTargetModal.classList.remove('show');
-                showToast(`Nomor tujuan diset: ${waTargetNumber}`, '📱');
-            });
+            if (saveWaTargetBtn) {
+                saveWaTargetBtn.addEventListener('click', addWaTarget);
+            }
+            const closeWaTargetBtn = document.getElementById('closeWaTargetBtn');
+            if (closeWaTargetBtn) {
+                closeWaTargetBtn.addEventListener('click', () => waTargetModal.classList.remove('show'));
+            }
+            if (waTargetInput) {
+                waTargetInput.addEventListener('keypress', e => {
+                    if (e.key === 'Enter') addWaTarget();
+                });
+            }
             waTargetModal.addEventListener('click', e => { if (e.target === waTargetModal) waTargetModal.classList.remove('show'); });
 
             document.getElementById('toggleWaMode').addEventListener('click', toggleWaMode);
+
+            const waTargetChip = document.getElementById('waTargetChip');
+            if (waTargetChip) {
+                waTargetChip.addEventListener('click', () => {
+                    renderWaTargetList();
+                    waTargetModal.classList.add('show');
+                });
+            }
+            const waModeChip = document.getElementById('waModeChip');
+            if (waModeChip) {
+                waModeChip.addEventListener('click', () => toggleWaMode());
+            }
+            const waStatusPill = document.getElementById('waStatusPill');
+            if (waStatusPill) {
+                waStatusPill.addEventListener('click', () => {
+                    document.getElementById('openWaModalBtn')?.click();
+                });
+            }
 
             document.getElementById('openThemeModal').addEventListener('click', () => {
                 closeMenu();
